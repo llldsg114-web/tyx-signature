@@ -13,6 +13,10 @@ const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
   'zcool-xiaowei':()=>import('@fontsource/zcool-xiaowei/index.css'),
   'zcool-qingke-huangyou':()=>import('@fontsource/zcool-qingke-huangyou/index.css'),
   'zcool-kuaile':()=>import('@fontsource/zcool-kuaile/index.css'),
+  'kose-font-sc':async()=>{const {default:url}=await import('@fontpkg/kose-font-sc/KoseFont-SC.ttf?url');const face=new FontFace('KoseFont SC',`url("${url}")`);await face.load();document.fonts.add(face);},
+  'yozai':()=>import('cn-fontsource-yozai/font.css'),
+  'huninn':()=>import('@fontsource/huninn/index.css'),
+  'smiley-sans':async()=>{const {default:url}=await import('@fontpkg/smiley-sans/SmileySans-Oblique.ttf.woff2?url');const face=new FontFace('Smiley Sans',`url("${url}")`);await face.load();document.fonts.add(face);},
 };
 const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'great-vibes':()=>import('@fontsource/great-vibes/latin-400.css'),
@@ -29,6 +33,16 @@ const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'kalam':()=>import('@fontsource/kalam/latin-400.css'),
   'mrs-saint-delafield':()=>import('@fontsource/mrs-saint-delafield/latin-400.css'),
   'herr-von-muellerhoff':()=>import('@fontsource/herr-von-muellerhoff/latin-400.css'),
+  'yellowtail':()=>import('@fontsource/yellowtail/latin-400.css'),
+  'homemade-apple':()=>import('@fontsource/homemade-apple/latin-400.css'),
+  'meie-script':()=>import('@fontsource/meie-script/latin-400.css'),
+  'marck-script':()=>import('@fontsource/marck-script/latin-400.css'),
+  'grand-hotel':()=>import('@fontsource/grand-hotel/latin-400.css'),
+  'kaushan-script':()=>import('@fontsource/kaushan-script/latin-400.css'),
+  'berkshire-swash':()=>import('@fontsource/berkshire-swash/latin-400.css'),
+  'norican':()=>import('@fontsource/norican/latin-400.css'),
+  'qwigley':()=>import('@fontsource/qwigley/latin-400.css'),
+  'arizonia':()=>import('@fontsource/arizonia/latin-400.css'),
 };
 const loaded=new Set<string>();
 

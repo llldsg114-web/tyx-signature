@@ -18,6 +18,10 @@ export const chineseFontChoices=[
   {id:'zcool-xiaowei',label:'站酷小薇',family:'ZCOOL XiaoWei'},
   {id:'zcool-qingke-huangyou',label:'站酷庆科黄油',family:'ZCOOL QingKe HuangYou'},
   {id:'zcool-kuaile',label:'站酷快乐体',family:'ZCOOL KuaiLe'},
+  {id:'kose-font-sc',label:'小濑字体',family:'KoseFont SC'},
+  {id:'yozai',label:'悠哉字体',family:'Yozai'},
+  {id:'huninn',label:'粉圆体',family:'Huninn'},
+  {id:'smiley-sans',label:'得意黑',family:'Smiley Sans'},
 ] as const;
 export const englishFontChoices=[
   {id:'great-vibes',label:'Great Vibes',family:'Great Vibes'},
@@ -34,6 +38,16 @@ export const englishFontChoices=[
   {id:'kalam',label:'Kalam',family:'Kalam'},
   {id:'mrs-saint-delafield',label:'Mrs Saint Delafield',family:'Mrs Saint Delafield'},
   {id:'herr-von-muellerhoff',label:'Herr Von Muellerhoff',family:'Herr Von Muellerhoff'},
+  {id:'yellowtail',label:'Yellowtail',family:'Yellowtail'},
+  {id:'homemade-apple',label:'Homemade Apple',family:'Homemade Apple'},
+  {id:'meie-script',label:'Meie Script',family:'Meie Script'},
+  {id:'marck-script',label:'Marck Script',family:'Marck Script'},
+  {id:'grand-hotel',label:'Grand Hotel',family:'Grand Hotel'},
+  {id:'kaushan-script',label:'Kaushan Script',family:'Kaushan Script'},
+  {id:'berkshire-swash',label:'Berkshire Swash',family:'Berkshire Swash'},
+  {id:'norican',label:'Norican',family:'Norican'},
+  {id:'qwigley',label:'Qwigley',family:'Qwigley'},
+  {id:'arizonia',label:'Arizonia',family:'Arizonia'},
 ] as const;
 export const strokeStyleChoices=[
   {id:'original',label:'原版连笔'},
