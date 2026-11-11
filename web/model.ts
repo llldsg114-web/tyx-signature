@@ -26,6 +26,9 @@ export const chineseFontChoices=[
   {id:'lxgw-bright',label:'霞鹜亮字',family:'LXGW Bright',group:'经典'},
   {id:'glow-sans-sc',label:'未来荧黑',family:'Glow Sans SC',group:'创意'},
   {id:'fusion-pixel-sc',label:'Fusion 像素体',family:'Fusion Pixel 12px Proportional SC',group:'创意'},
+  {id:'lxgw-marker-gothic',label:'霞鹜漫黑',family:'LXGW Marker Gothic',group:'创意'},
+  {id:'975-maru-sc',label:'975 圆体',family:'975Maru SC',group:'创意'},
+  {id:'xiaolai-sc',label:'小赖字体',family:'Xiaolai SC',group:'手写'},
 ] as const;
 export const englishFontChoices=[
   {id:'great-vibes',label:'Great Vibes',family:'Great Vibes',group:'花体'},
