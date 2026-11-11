@@ -46,6 +46,22 @@ test('website names accept Chinese and Chinese punctuation with the original bru
   assert.equal(restored.people[0].name,'欧阳·娜娜');
   assert.equal(restored.people[1].name,'Alex 王');
 });
+test('each person keeps independent actual-font and stroke-style choices',()=>{
+  const c=defaultWebConfig();
+  assert.equal(c.people[0].font.mode,'stroke');
+  assert.equal(c.people[0].font.style,'original');
+  c.people[0].font={...c.people[0].font,mode:'font',chineseFont:'zhi-mang-xing',englishFont:'alex-brush'};
+  c.people[1].font={...c.people[1].font,mode:'stroke',style:'brush'};
+  const store=new Map<string,string>();
+  const storage={getItem:(key:string)=>store.get(key)??null,setItem:(key:string,value:string)=>{store.set(key,value);}};
+  saveConfig(storage,c);
+  const loaded=loadConfig(storage).config;
+  assert.equal(loaded.people[0].font.mode,'font');
+  assert.equal(loaded.people[0].font.chineseFont,'zhi-mang-xing');
+  assert.equal(loaded.people[0].font.englishFont,'alex-brush');
+  assert.equal(loaded.people[1].font.mode,'stroke');
+  assert.equal(loaded.people[1].font.style,'brush');
+});
 test('choosing a different decoration clears the previous ornament placement',()=>{
   const person=defaultPerson(1);
   person.decoration={...person.decoration,id:'sun',scale:.7,offsetX:.07582260371959945,offsetY:.10705751155010357};

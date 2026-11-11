@@ -17,6 +17,15 @@
     "test": "tsx --test tests/web-*.test.ts tests/config.test.ts tests/motion.test.ts tests/brush.test.ts"
   },
   "dependencies": {
+    "@fontsource/alex-brush": "5.3.0",
+    "@fontsource/caveat": "5.3.0",
+    "@fontsource/great-vibes": "5.3.0",
+    "@fontsource/italianno": "5.3.0",
+    "@fontsource/liu-jian-mao-cao": "5.3.0",
+    "@fontsource/long-cang": "5.3.0",
+    "@fontsource/ma-shan-zheng": "5.3.1",
+    "@fontsource/tangerine": "5.3.0",
+    "@fontsource/zhi-mang-xing": "5.3.0",
     "hanzi-writer-data": "2.0.1",
     "mediabunny": "1.56.1",
     "react": "19.1.1",

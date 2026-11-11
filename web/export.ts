@@ -1,6 +1,7 @@
 import {canvasSize,validateConfig,type WebConfig} from './model';
 import {prepareScene,renderScene} from './renderer';
 import {cancelled,prepareAudio,withCancellation} from './audio';
+import {loadConfigFonts} from './font-loader';
 
 const FPS=30;
 const VIDEO_BITRATE=8_000_000;
@@ -64,6 +65,8 @@ export async function exportVideo(input:WebConfig,options:ExportOptions={}):Prom
   const support=await withCancellation(detectSupport(config,!!audioFile),signal);
   cancelled(signal);
   if(!support.supported||!support.codec)throw new Error(support.reason??`当前浏览器无法导出 MP4。${SWITCH_BROWSER}`);
+  cancelled(signal);
+  await loadConfigFonts(config);
   cancelled(signal);
   const scene=prepareScene(config);
   const frames=Math.round(scene.duration*FPS);

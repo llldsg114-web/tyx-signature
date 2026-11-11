@@ -5,6 +5,14 @@ import type {SignatureConfig} from '../src/config';
 import type {Scheme} from './model';
 import {getHanziData,hanziCharacters,isHanzi} from './hanzi-data';
 
+const styleProfiles={
+ original:{width:1,slant:0},
+ neat:{width:.72,slant:0},
+ soft:{width:1.16,slant:-.025},
+ flowing:{width:1.02,slant:.11},
+ brush:{width:1.24,slant:.045},
+} as const;
+
 export type InkSample=Point&{radius:number;u:number};
 export type PreparedStroke=BrushStroke&{samples:InkSample[]};
 export type PreparedBrush={strokes:PreparedStroke[];duration:number;box:Box;guide:ReturnType<typeof buildBrush>['guide']};
@@ -146,8 +154,11 @@ function mixedStrokes(config:SignatureConfig):{strokes:BrushStroke[];guide:Prepa
 
 /** Prepare timed TYX strokes with deterministic pressure samples. */
 export function buildWebBrush(config:SignatureConfig,_scheme:Scheme,_family:'tyx-brush'|'tyx-soft'='tyx-brush'):PreparedBrush{
- const handwriting={...config,font:{...config.font,initialScale:1+(config.font.initialScale-1)*.45}};
- const original=hanziCharacters(handwriting.name).length?mixedStrokes(handwriting):originalLetterStrokes(handwriting),strokes=original.strokes,size=config.font.size;
+ const profile=styleProfiles[config.font.style];
+ const handwriting={...config,font:{...config.font,penWidth:config.font.penWidth*profile.width,initialScale:1+(config.font.initialScale-1)*.45}};
+ const source=hanziCharacters(handwriting.name).length?mixedStrokes(handwriting):originalLetterStrokes(handwriting);
+ const strokes=profile.slant===0?source.strokes:source.strokes.map(stroke=>({...stroke,curve:transformCurve(stroke.curve,p=>({x:p.x-p.y*profile.slant,y:p.y}))}));
+ const original={...source,strokes},size=config.font.size;
  let clock=0;
  const prepared=strokes.map((source,index)=>{
   // Prepare timing objects without mutating the source strokes.
