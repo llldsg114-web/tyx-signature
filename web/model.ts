@@ -51,6 +51,13 @@ export function defaultPerson(index=0):PersonConfig{
 export function defaultWebConfig():WebConfig{
   return webSchema.parse(structuredClone(defaultDesign));
 }
+export function chooseDecoration(person:PersonConfig,id:PersonConfig['decoration']['id']):void{
+  if(person.decoration.id===id)return;
+  person.decoration.id=id;
+  person.decoration.scale=1;
+  person.decoration.offsetX=0;
+  person.decoration.offsetY=0;
+}
 function simplifyDesign(config:WebConfig):WebConfig{
   for(const person of config.people){
     person.scheme='classic';

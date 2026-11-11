@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultPerson,defaultWebConfig,validateConfig,parseConfigFile,loadConfig,saveConfig,STORAGE_KEY,canvasSize,asBrushConfig} from '../web/model';
+import {defaultPerson,defaultWebConfig,validateConfig,parseConfigFile,loadConfig,saveConfig,STORAGE_KEY,canvasSize,asBrushConfig,chooseDecoration} from '../web/model';
 import defaultDesign from '../web/default-design.json';
 import {ACTIVE_DECORATION_IDS} from '../web/decoration-catalog';
 
@@ -45,6 +45,20 @@ test('website names accept Chinese and Chinese punctuation with the original bru
   const restored=validateConfig(c);
   assert.equal(restored.people[0].name,'欧阳·娜娜');
   assert.equal(restored.people[1].name,'Alex 王');
+});
+test('choosing a different decoration clears the previous ornament placement',()=>{
+  const person=defaultPerson(1);
+  person.decoration={...person.decoration,id:'sun',scale:.7,offsetX:.07582260371959945,offsetY:.10705751155010357};
+  chooseDecoration(person,'paw-beans');
+  assert.equal(person.decoration.id,'paw-beans');
+  assert.equal(person.decoration.scale,1);
+  assert.equal(person.decoration.offsetX,0);
+  assert.equal(person.decoration.offsetY,0);
+  person.decoration.scale=1.2;person.decoration.offsetX=.12;person.decoration.offsetY=-.08;
+  chooseDecoration(person,'paw-beans');
+  assert.equal(person.decoration.scale,1.2);
+  assert.equal(person.decoration.offsetX,.12);
+  assert.equal(person.decoration.offsetY,-.08);
 });
 
 test('defaults clone the default design and never share nested state',()=>{

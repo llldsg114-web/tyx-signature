@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {canvasSize,clamp,defaultWebConfig,loadConfig,parseConfigFile,saveConfig,validateConfig,type PersonConfig,type WebConfig} from './model';
+import {canvasSize,chooseDecoration,clamp,defaultWebConfig,loadConfig,parseConfigFile,saveConfig,validateConfig,type PersonConfig,type WebConfig} from './model';
 import {prepareScene,type PreparedScene} from './renderer';
 import {Preview} from './Preview';
 import {ColorField,Details,Icon,Range,Section,Toggle,UtilityMenu} from './ui';
@@ -105,9 +105,9 @@ function App(){
       {tab==='decoration'&&<div className="inspector-cards">
         {personPicker&&<div className="setting-card setting-card-people">{personPicker}</div>}
         <div className="setting-card"><Section title="装饰图案" icon="sparkle">
-          <div className="decoration-library-head"><span className="caption-5">当前：{decorationCatalog.find(item=>item.id===person.decoration.id)?.label??'无装饰'}</span><button type="button" className="decoration-clear" aria-pressed={person.decoration.id==='none'} onClick={()=>changePerson(next=>{next.decoration.id='none';})}><Icon name="none" size={14}/>无装饰</button></div>
+          <div className="decoration-library-head"><span className="caption-5">当前：{decorationCatalog.find(item=>item.id===person.decoration.id)?.label??'无装饰'}</span><button type="button" className="decoration-clear" aria-pressed={person.decoration.id==='none'} onClick={()=>changePerson(next=>chooseDecoration(next,'none'))}><Icon name="none" size={14}/>无装饰</button></div>
           <div className="decoration-categories" role="group" aria-label="装饰分类">{decorationCategories.map(category=><button type="button" className="decoration-category" key={category.id} aria-pressed={decorationCategory===category.id} onClick={()=>setDecorationCategory(category.id)}>{category.label}</button>)}</div>
-          <div className="decoration-grid" role="group" aria-label={`${decorationCategories.find(category=>category.id===decorationCategory)?.label}图案`}>{decorationCatalog.filter(item=>item.category===decorationCategory).map(item=><button type="button" key={item.id} className={`decoration-choice ${person.decoration.id===item.id?'selected':''}`} aria-pressed={person.decoration.id===item.id} onClick={()=>changePerson(next=>{next.decoration.id=item.id;})}><DecorationThumbnail id={item.id} person={person} background={config.canvas.background}/><span>{item.label}</span></button>)}</div>
+          <div className="decoration-grid" role="group" aria-label={`${decorationCategories.find(category=>category.id===decorationCategory)?.label}图案`}>{decorationCatalog.filter(item=>item.category===decorationCategory).map(item=><button type="button" key={item.id} className={`decoration-choice ${person.decoration.id===item.id?'selected':''}`} aria-pressed={person.decoration.id===item.id} onClick={()=>changePerson(next=>chooseDecoration(next,item.id))}><DecorationThumbnail id={item.id} person={person} background={config.canvas.background}/><span>{item.label}</span></button>)}</div>
         </Section></div>
         {person.decoration.id!=='none'&&<div className="setting-card"><Range title="大小" value={person.decoration.scale} min={.5} max={1.5} step={.05} suffix="×" onChange={value=>changePerson(next=>{next.decoration.scale=value;})}/></div>}
       </div>}
