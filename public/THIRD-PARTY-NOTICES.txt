@@ -25,11 +25,15 @@ License: hanzi-data/ARPHICPL.TXT
 Source: https://github.com/chanind/hanzi-writer-data
 
 Fontsource font packages — MIT package tooling; font files use SIL OFL 1.1
-Fonts: LXGW WenKai, Ma Shan Zheng, Zhi Mang Xing, Long Cang, Liu Jian Mao Cao,
-ZCOOL XiaoWei, ZCOOL QingKe HuangYou, ZCOOL KuaiLe, Great Vibes, Tangerine,
-Italianno, Alex Brush, Caveat, Allura, Parisienne, Pinyon Script,
-Dancing Script, Sacramento, Petit Formal Script, Kalam, Mrs Saint Delafield,
-Herr Von Muellerhoff
+except Yellowtail and Homemade Apple, which use Apache-2.0
+Fonts: LXGW WenKai, Kose Font SC, Yozai, Huninn, Smiley Sans,
+Ma Shan Zheng, Zhi Mang Xing, Long Cang, Liu Jian Mao Cao,
+ZCOOL XiaoWei, ZCOOL QingKe HuangYou, ZCOOL KuaiLe, Great Vibes,
+Tangerine, Italianno, Alex Brush, Caveat, Allura, Parisienne,
+Pinyon Script, Dancing Script, Sacramento, Petit Formal Script, Kalam,
+Mrs Saint Delafield, Herr Von Muellerhoff, Yellowtail, Homemade Apple,
+Meie Script, Marck Script, Grand Hotel, Kaushan Script, Berkshire Swash,
+Norican, Qwigley, Arizonia
 Source: https://github.com/fontsource/fontsource and https://github.com/google/fonts
 
 Geist Sans variable font, geist 1.9.2 — SIL Open Font License 1.1
