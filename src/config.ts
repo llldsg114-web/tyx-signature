@@ -2,10 +2,11 @@ import {z} from 'zod';
 import catalog from '../assets/fonts/catalog.json';
 import {SignatureError} from './errors';
 const hex=z.string().regex(/^#[0-9a-f]{6}$/i,'请使用六位十六进制颜色，例如 #ffffff。');
+const signatureNamePattern=/^[\p{Script=Han}A-Za-z '\-·]+$/u;
 export const fontIds=['tangerine','italianno','ems-allure','tyx-brush'] as const;
 export const signatureSchema=z.object({
  schemaVersion:z.literal(1).default(1),
- name:z.string().min(1).max(40).regex(/^[A-Za-z '\-]+$/,'请只使用英文字母、普通空格、英文撇号或连字符。').refine(s=>/[A-Za-z]/.test(s),'姓名中至少需要一个英文字母。').describe('英文或拼音姓名，保留输入大小写'),
+ name:z.string().min(1).max(40).regex(signatureNamePattern,'请只使用中文字符、英文字母、普通空格、中点、英文撇号或连字符。').refine(s=>/[\p{Script=Han}A-Za-z]/u.test(s),'姓名中至少需要一个汉字或英文字母。').describe('中文、英文或拼音姓名，保留输入大小写'),
  font:z.object({id:z.enum(fontIds).default('tangerine').describe('字体：Tangerine / Italianno / EMS Allure / TYX Brush'),size:z.number().min(48).max(320).default(240).describe('字号，按设计画幅像素计算'),weight:z.literal(400).default(400),penWidth:z.number().min(.5).max(2).default(1).describe('单线字体笔宽倍数；轮廓字体必须为 1。'),pressure:z.number().min(0).max(1).default(1).describe('沿笔段粗细变化的保留程度'),initialScale:z.number().min(1).max(1.6).default(1.3).describe('TYX Brush 整段首字母大小；不改变大小写'),initialOffsetX:z.number().min(-120).max(120).default(0).describe('TYX Brush 首字母左右偏移，设计像素；正数向右'),initialOffsetY:z.number().min(-120).max(120).default(0).describe('TYX Brush 首字母上下偏移，设计像素；正数向下'),terminalLength:z.number().min(.5).max(1.8).default(1).describe('TYX Brush 末字母收笔长度倍数')}).strict().prefault({}),
  ink:z.object({color:hex.default('#f5fffd')}).strict().prefault({}),
  glow:z.object({enabled:z.boolean().default(true),color:hex.default('#59e6d7'),strength:z.number().min(0).max(1).default(.65),radius:z.number().min(0).max(48).default(18)}).strict().prefault({}),
@@ -31,7 +32,7 @@ export function parseConfig(input:unknown):SignatureConfig {
  if(!result.success)throw new SignatureError('CONFIG_INVALID',result.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('\n'),'请修改 signature.json 中指出的字段；上次保存的配置会保留。');
  const c=result.data;const font=catalog.find(f=>f.id===c.font.id)!;
  if(font.kind!=='stroke'&&c.font.penWidth!==1)throw new SignatureError('FONT_WIDTH_UNAVAILABLE',`${font.label} 使用真实轮廓，笔宽倍数 penWidth 必须为 1。`,'如需改变笔宽，请选择 EMS Allure 或 TYX Brush。');
- const missing=[...new Set([...c.name].filter(ch=>ch!==' '&&!font.coverage.includes(ch)))];
+ const missing=[...new Set([...c.name].filter(ch=>ch!==' '&&!(font.coverage.includes(ch)||(c.font.id==='tyx-brush'&&(/\p{Script=Han}/u.test(ch)||ch==='·')))))];
  if(missing.length)throw new SignatureError('FONT_MISSING_GLYPH',`${font.label} 缺少以下字符的运笔数据：${missing.join(' ')}`,'请选其他内置字体或修改姓名；程序不会擅自替换字符。');
  return c;
 }

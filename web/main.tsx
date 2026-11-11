@@ -7,6 +7,7 @@ import {ColorField,Details,Icon,Range,Section,Toggle,UtilityMenu} from './ui';
 import {MorphNav} from './MorphNav';
 import {DecorationThumbnail} from './DecorationThumbnail';
 import {categoryForDecoration,decorationCatalog,decorationCategories,type DecorationCategory} from './decoration-catalog';
+import {loadHanziData,missingHanziCharacters} from './hanzi-data';
 import './style.css';
 
 type Tab='signature'|'decoration'|'export';
@@ -24,11 +25,37 @@ function App(){
   const [job,setJob]=useState<Job>(idle),[pauseToken,setPauseToken]=useState(0);
   const audition=useRef<HTMLAudioElement>(null),importInput=useRef<HTMLInputElement>(null),abort=useRef<AbortController|null>(null),lastUrl=useRef<string|undefined>(undefined),lastGood=useRef<PreparedScene|null>(null);
   const [undo,setUndo]=useState<{config:WebConfig;audio:File|null}|null>(null);
-  const prepared=useMemo(()=>{try{const c=validateConfig(config),scene=prepareScene(c);return {scene,error:''};}catch(error){return {scene:null,error:error instanceof Error?error.message:'暂时无法绘制，请检查参数'};}},[config]);
+  const [hanziStatus,setHanziStatus]=useState<{status:'idle'|'loading'|'ready'|'error';error?:string}>({status:'idle'});
+  const [hanziRevision,setHanziRevision]=useState(0);
+  const activeNamesKey=useMemo(()=>config.people.slice(0,config.mode==='couple'?2:1).map(person=>person.name).join('\n'),[config.mode,config.people[0].name,config.people[1].name]);
+  useEffect(()=>{
+    let active=true;
+    if(!missingHanziCharacters(activeNamesKey).length){setHanziStatus({status:'ready'});return ()=>{active=false;};}
+    setHanziStatus({status:'loading'});
+    void loadHanziData(activeNamesKey).then(()=>{
+      if(!active)return;
+      setHanziStatus({status:'ready'});setHanziRevision(value=>value+1);
+    }).catch(error=>{
+      if(!active)return;
+      setHanziStatus({status:'error',error:error instanceof Error?error.message:'中文笔顺加载失败。'});
+    });
+    return ()=>{active=false;};
+  },[activeNamesKey]);
+  const prepared=useMemo(()=>{
+    try{
+      const c=validateConfig(config),missing=missingHanziCharacters(activeNamesKey);
+      if(missing.length){
+        if(hanziStatus.status==='error')return {scene:null,error:hanziStatus.error??'中文笔顺加载失败。',loading:''};
+        return {scene:null,error:'',loading:`正在加载“${missing.join('”')}”的汉字笔顺…`};
+      }
+      const scene=prepareScene(c);return {scene,error:'',loading:''};
+    }catch(error){return {scene:null,error:error instanceof Error?error.message:'暂时无法绘制，请检查参数',loading:''};}
+  },[config,activeNamesKey,hanziStatus,hanziRevision]);
   if(prepared.scene)lastGood.current=prepared.scene;
   const scene=prepared.scene??lastGood.current;
   const person=config.people[selected],busy=job.status==='checking'||job.status==='working';
-  const invalidName=!/[a-z]/i.test(person.name)||!/^[A-Za-z '\-]+$/.test(person.name);
+  const preparing=!!prepared.loading;
+  const invalidName=!/[\p{Script=Han}A-Za-z]/u.test(person.name)||!/^[\p{Script=Han}A-Za-z '\-·]+$/u.test(person.name);
   const update=(fn:(next:WebConfig)=>void)=>{setConfig(current=>{const next=structuredClone(current);fn(next);return next;});};
   const changePerson=(fn:(p:PersonConfig)=>void)=>update(c=>fn(c.people[selected]));
   useEffect(()=>{const category=categoryForDecoration(person.decoration.id);if(category)setDecorationCategory(category);},[selected,person.decoration.id]);
@@ -40,7 +67,7 @@ function App(){
   const importFile=async(file?:File)=>{if(!file)return;try{if(file.size>1024*1024)throw new Error('配置文件过大，请选择本工具导出的 JSON 配置');const next=directFontConfig(parseConfigFile(await file.text()));setConfig(next);setSelected(0);setAudioFile(null);setNotice('配置已导入。若需要音乐，请重新选择音频文件。');}catch(e){setNotice(e instanceof Error?e.message:'配置导入失败');}finally{if(importInput.current)importInput.current.value='';}};
   const chooseAudio=(file?:File)=>{if(!file)return;if(file.size>200*1024*1024){setNotice('这段音频超过 200 MB，请先选择较短的音频片段。');return;}setAudioFile(file);setAudioDuration(0);update(c=>{c.audio.start=0;});};
   const exportMp4=async()=>{
-    if(busy||prepared.error)return;setPauseToken(t=>t+1);setJob({status:'checking',progress:0,stage:'正在检查当前浏览器…'});
+    if(busy||preparing||prepared.error)return;setPauseToken(t=>t+1);setJob({status:'checking',progress:0,stage:'正在检查当前浏览器…'});
     const controller=new AbortController();abort.current=controller;
     try{
       const snapshot=validateConfig(structuredClone(config));const {checkExportSupport,exportVideo}=await import('./export');
@@ -49,7 +76,7 @@ function App(){
       setJob({status:'working',progress:0,stage:'准备绘制…'});
       const blob=await exportVideo(snapshot,{audioFile,signal:controller.signal,onProgress:(progress,stage)=>setJob({status:'working',progress:clamp(progress,0,1),stage})});
       if(lastUrl.current)URL.revokeObjectURL(lastUrl.current);const url=URL.createObjectURL(blob);lastUrl.current=url;
-      const names=snapshot.people.slice(0,snapshot.mode==='couple'?2:1).map(p=>p.name.replace(/[^a-z0-9-]/gi,'')).join('-');
+      const names=snapshot.people.slice(0,snapshot.mode==='couple'?2:1).map(p=>p.name.replace(/[^\p{Script=Han}a-z0-9-]/giu,'')).join('-');
       setJob({status:'done',progress:1,stage:'视频已做好，可以下载了。',url,fileName:`tyx-${names||'signature'}-${snapshot.canvas.aspect}.mp4`});
     }catch(e){if(controller.signal.aborted||(e instanceof DOMException&&e.name==='AbortError'))setJob({status:'cancelled',progress:0,stage:'已取消，设计已保留。'});
       else setJob({status:'error',progress:0,stage:e instanceof Error?e.message:'导出失败，请重试。'});
@@ -67,8 +94,8 @@ function App(){
         <div className="setting-card"><Toggle title="情侣签名" checked={config.mode==='couple'} onChange={value=>{update(c=>{c.mode=value?'couple':'single';});if(!value)setSelected(0);}}/></div>
         {personPicker&&<div className="setting-card setting-card-people">{personPicker}</div>}
         <div className="setting-card"><Section title={config.mode==='couple'?`${selected===0?'第一位':'第二位'}的签名`:'写下你的名字'} icon="pen">
-          <label className="field"><span className="field-label">英文名字或拼音</span><input className="name-input" aria-label="签名姓名" aria-invalid={invalidName} aria-describedby={invalidName?'signature-name-error':undefined} value={person.name} maxLength={40} placeholder="例如 TYX、Li Xin" spellCheck={false} autoComplete="off" onChange={event=>changePerson(next=>{next.name=event.target.value;})}/></label>
-          {invalidName&&<p className="field-error caption-4" id="signature-name-error">请输入英文字母或拼音，可保留空格、撇号和连字符。</p>}
+          <label className="field"><span className="field-label">中文、英文名字或拼音</span><input className="name-input" aria-label="签名姓名" aria-invalid={invalidName} aria-describedby={invalidName?'signature-name-error':undefined} value={person.name} maxLength={40} placeholder="例如 张伟、Alex、Li Xin" spellCheck={false} autoComplete="off" onChange={event=>changePerson(next=>{next.name=event.target.value;})}/></label>
+          {invalidName&&<p className="field-error caption-4" id="signature-name-error">请输入汉字或英文字母，可保留空格、中点、撇号和连字符。</p>}
         </Section></div>
         <div className="setting-card"><ColorField key={`signature-color-${selected}`} title="签名颜色" value={person.ink.color} editable onChange={value=>changePerson(next=>{next.ink.color=value;next.glow.color=value;})}/></div>
         <div className="setting-card"><Range title="大小" value={person.position.scale} min={.45} max={1.5} step={.05} suffix="×" onChange={value=>changePerson(next=>{next.position.scale=value;})}/></div>
@@ -99,12 +126,12 @@ function App(){
     {tab==='export'&&<div className="export-inline-actions">
       {job.status!=='idle'&&<div className={`export-progress ${job.status==='error'?'notice error':''}`} data-status={job.status} role="status"><span>{job.stage}</span>{busy&&<div className="progress-track" role="progressbar" aria-label="视频生成进度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(job.progress*100)}><span style={{transform:`scaleX(${job.progress})`}}/></div>}</div>}
       {job.status==='done'&&job.url&&<video src={job.url} controls playsInline preload="metadata" className="export-result-video"/>}
-      <div className="export-actions">{busy?<button className="button secondary" onClick={()=>{abort.current?.abort();setJob(current=>({...current,stage:'正在取消…'}));}}>取消导出</button>:<>{job.status==='done'&&job.url&&<a className="button primary" href={job.url} download={job.fileName}><Icon name="download" size={15}/>下载视频</a>}<button className={`button ${job.status==='done'?'secondary':'primary'}`} disabled={!!prepared.error} onClick={()=>void exportMp4()}><Icon name="download" size={15}/>{job.status==='done'?'重新生成':'生成 MP4'}</button></>}</div>
+      <div className="export-actions">{busy?<button className="button secondary" onClick={()=>{abort.current?.abort();setJob(current=>({...current,stage:'正在取消…'}));}}>取消导出</button>:<>{job.status==='done'&&job.url&&<a className="button primary" href={job.url} download={job.fileName}><Icon name="download" size={15}/>下载视频</a>}<button className={`button ${job.status==='done'?'secondary':'primary'}`} disabled={!!prepared.error||preparing} onClick={()=>void exportMp4()}><Icon name="download" size={15}/>{preparing?'正在加载中文…':job.status==='done'?'重新生成':'生成 MP4'}</button></>}</div>
     </div>}
     </MorphNav>
     <section className="canvas-column" aria-label="作品预览">
-      {(notice||prepared.error)&&<div className={`notice ${prepared.error?'error':'warning'}`} role={prepared.error?'alert':'status'}><span>{prepared.error||notice}</span>{undo&&<button disabled={busy} onClick={()=>{setConfig(undo.config);setAudioFile(undo.audio);setUndo(null);setNotice('已撤销重置。');}}>撤销</button>}{!prepared.error&&<button className="notice-close" aria-label="关闭提示" onClick={()=>{setNotice('');setUndo(null);}}><Icon name="close" size={14}/></button>}</div>}
-      {scene?<Preview disabled={busy} controlsTarget={previewControlsTarget} onStartPlayback={()=>audition.current?.pause()} scene={scene} selected={selected} config={config} audioUrl={audioUrl} pauseToken={pauseToken} onSelect={setSelected} onDrag={(index,target,dx,dy)=>{if(busy)return;setSelected(index);update(c=>{const person=c.people[index];if(target==='signature'){person.position.x=clamp(person.position.x+dx,-.45,.45);person.position.y=clamp(person.position.y+dy,-.45,.45);}else{person.decoration.offsetX=clamp(person.decoration.offsetX+dx,-.45,.45);person.decoration.offsetY=clamp(person.decoration.offsetY+dy,-.45,.45);}});}}/>:<div className="canvas-empty"><Icon name="pen" size={32}/><h2 className="title-3">写下名字，开始设计</h2><p className="body-6">在签名设置中输入英文名字或拼音，即可生成预览。</p></div>}
+      {(notice||prepared.error||prepared.loading)&&<div className={`notice ${prepared.error?'error':'warning'}`} role={prepared.error?'alert':'status'}><span>{prepared.error||prepared.loading||notice}</span>{undo&&!prepared.loading&&<button disabled={busy} onClick={()=>{setConfig(undo.config);setAudioFile(undo.audio);setUndo(null);setNotice('已撤销重置。');}}>撤销</button>}{!prepared.error&&!prepared.loading&&<button className="notice-close" aria-label="关闭提示" onClick={()=>{setNotice('');setUndo(null);}}><Icon name="close" size={14}/></button>}</div>}
+      {scene?<Preview disabled={busy} controlsTarget={previewControlsTarget} onStartPlayback={()=>audition.current?.pause()} scene={scene} selected={selected} config={config} audioUrl={audioUrl} pauseToken={pauseToken} onSelect={setSelected} onDrag={(index,target,dx,dy)=>{if(busy)return;setSelected(index);update(c=>{const person=c.people[index];if(target==='signature'){person.position.x=clamp(person.position.x+dx,-.45,.45);person.position.y=clamp(person.position.y+dy,-.45,.45);}else{person.decoration.offsetX=clamp(person.decoration.offsetX+dx,-.45,.45);person.decoration.offsetY=clamp(person.decoration.offsetY+dy,-.45,.45);}});}}/>:<div className="canvas-empty"><Icon name="pen" size={32}/><h2 className="title-3">写下名字，开始设计</h2><p className="body-6">{preparing?'正在准备汉字笔顺，请稍候…':'在签名设置中输入中文、英文名字或拼音，即可生成预览。'}</p></div>}
       {!!scene?.warnings?.length&&<div className="notice warning" role="status">{scene.warnings.join('；')}</div>}
     </section></main>
     <input className="sr-only" ref={importInput} type="file" accept="application/json,.json" aria-label="导入签名配置文件" onChange={event=>void importFile(event.target.files?.[0])}/>

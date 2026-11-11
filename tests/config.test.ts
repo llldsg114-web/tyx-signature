@@ -6,6 +6,10 @@ test('names retain case, spaces and supported punctuation',()=>{
  for(const name of ['Zoe','zoe','Alex Chen',"O'Connor",'Anne-Marie'])assert.equal(parseConfig({name}).name,name);
  assert.throws(()=>parseConfig({name:'你好'}));assert.throws(()=>parseConfig({name:'   '}));
 });
+test('TYX Brush accepts Chinese names while keeping letter names unchanged',()=>{
+ for(const name of ['张伟','欧阳·娜娜','Alex 王','李Li'])assert.equal(parseConfig({name,font:{id:'tyx-brush'}}).name,name);
+ assert.throws(()=>parseConfig({name:'张伟😀',font:{id:'tyx-brush'}}));
+});
 test('width capabilities are real and patches retain other groups',()=>{
  assert.throws(()=>parseConfig({name:'Alex',font:{id:'tangerine',penWidth:1.4}}));
  const result=parseConfig(mergeConfig(defaultConfig,{name:'Alex',font:{id:'ems-allure',penWidth:1.4}}));

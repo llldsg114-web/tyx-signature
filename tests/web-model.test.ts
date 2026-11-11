@@ -16,7 +16,7 @@ test('bad files, unsupported versions, nonfinite values and invalid timing are r
   const c=defaultWebConfig();assert.throws(()=>validateConfig({...c,version:1}));
   c.people[0].font.penWidth=Infinity;assert.throws(()=>validateConfig(c));
   const short=defaultWebConfig();short.timing.duration=3;short.timing.hold=2;assert.throws(()=>validateConfig(short),/至少 2 秒/);
-  const invalidName=defaultWebConfig();invalidName.people[0].name='太阳';assert.throws(()=>validateConfig(invalidName),/英文字母/);
+  const invalidName=defaultWebConfig();invalidName.people[0].name='太阳😀';assert.throws(()=>validateConfig(invalidName),/请使用汉字/);
 });
 test('corrupt or inaccessible storage recovers with an explicit warning',()=>{
   assert.equal(loadConfig({getItem:()=>'{'}).config.version,2);
@@ -39,6 +39,12 @@ test('all output aspects are even 1080p frames and the brush adapter selects ori
   for(const aspect of ['landscape','portrait','square'] as const){const size=canvasSize(aspect);assert.equal(Math.min(size.width,size.height),1080);assert.equal(size.width%2,0);assert.equal(size.height%2,0);}
   c.people[0].name="J-Anne O'Neil";
   const brush=asBrushConfig(c.people[0],c);assert.equal(brush.font.id,'tyx-brush');assert.equal(brush.name,"J-Anne O'Neil");assert.equal(brush.canvas.fps,30);
+});
+test('website names accept Chinese and Chinese punctuation with the original brush',()=>{
+  const c=defaultWebConfig();c.people[0].name='欧阳·娜娜';c.people[1].name='Alex 王';
+  const restored=validateConfig(c);
+  assert.equal(restored.people[0].name,'欧阳·娜娜');
+  assert.equal(restored.people[1].name,'Alex 王');
 });
 
 test('defaults clone the default design and never share nested state',()=>{

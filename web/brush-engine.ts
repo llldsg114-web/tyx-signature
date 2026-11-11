@@ -3,6 +3,7 @@ import {pointAt,pointBounds,sampleCubic,type Box,type Curve,type Point} from '..
 import {initials,middle,endings,metrics,type PenGlyph} from '../assets/fonts/tyx-brush/positional';
 import type {SignatureConfig} from '../src/config';
 import type {Scheme} from './model';
+import {getHanziData,hanziCharacters,isHanzi} from './hanzi-data';
 
 export type InkSample=Point&{radius:number;u:number};
 export type PreparedStroke=BrushStroke&{samples:InkSample[]};
@@ -55,10 +56,98 @@ function originalLetterStrokes(config:SignatureConfig):{strokes:BrushStroke[];gu
  return {strokes,guide:{baseline:0,xHeight:metrics.xHeight*factor,hasDescenders:strokes.some(s=>/[fgjpqxyz]/.test(s.char)),bodyStart:0,bodyEnd:cursor}};
 }
 
+function shiftStroke(stroke:BrushStroke,x:number):BrushStroke{
+ const curve=transformCurve(stroke.curve,p=>({x:p.x+x,y:p.y}));
+ return {...stroke,curve};
+}
+
+function smoothMedian(points:number[][],transform:(x:number,y:number)=>Point):Curve{
+ const source=points.map(([x,y])=>transform(x,y)).filter((point,index,all)=>index===0||Math.hypot(point.x-all[index-1].x,point.y-all[index-1].y)>.001);
+ if(source.length<2)return {points:[{...source[0],length:0}],length:0};
+ const sampled:Curve['points']=[];
+ let length=0;
+ const append=(point:Point)=>{
+  const previous=sampled.at(-1);
+  if(previous)length+=Math.hypot(point.x-previous.x,point.y-previous.y);
+  sampled.push({...point,length});
+ };
+ append(source[0]);
+ for(let i=0;i<source.length-1;i++){
+  const p0=source[Math.max(0,i-1)],p1=source[i],p2=source[i+1],p3=source[Math.min(source.length-1,i+2)];
+  const c1={x:p1.x+(p2.x-p0.x)/6,y:p1.y+(p2.y-p0.y)/6};
+  const c2={x:p2.x-(p3.x-p1.x)/6,y:p2.y-(p3.y-p1.y)/6};
+  for(const point of sampleCubic(p1,c1,c2,p2,12).points.slice(1))append(point);
+ }
+ return {points:sampled,length};
+}
+
+function chineseCharacterStrokes(char:string,charIndex:number,config:SignatureConfig,startX:number):{strokes:BrushStroke[];advance:number}{
+ const data=getHanziData(char);
+ if(!data)throw new Error(`汉字“${char}”缺少笔顺数据，请更换姓名或补充该字的数据。`);
+ const cell=config.font.size*.92,unit=cell/1024;
+ const transform=(x:number,y:number):Point=>({x:startX+x*unit,y:(900-y)*unit});
+ const strokes=data.medians.map((median,index)=>({
+  id:`han-${charIndex}-${index}`,
+  char,
+  index,
+  curve:smoothMedian(median,transform),
+  start:0,
+  duration:0,
+  width:config.font.size*.042*config.font.penWidth,
+  position:'han' as const,
+  dot:false,
+ }));
+ return {strokes,advance:cell*1.04};
+}
+
+function middleDotStroke(charIndex:number,config:SignatureConfig,startX:number):BrushStroke{
+ const size=config.font.size;
+ return {
+  id:`han-dot-${charIndex}`,
+  char:'·',
+  index:0,
+  curve:parseStroke(`M ${startX} ${-size*.34} C ${startX+size*.012} ${-size*.345} ${startX+size*.024} ${-size*.355} ${startX+size*.034} ${-size*.365}`),
+  start:0,
+  duration:0,
+  width:size*.030*config.font.penWidth,
+  position:'punctuation',
+  dot:true,
+ };
+}
+
+function mixedStrokes(config:SignatureConfig):{strokes:BrushStroke[];guide:PreparedBrush['guide']}{
+ const characters=[...config.name],strokes:BrushStroke[]=[],guide=originalLetterStrokes({...config,name:'A'}).guide;
+ let cursor=0,latin='',latinStart=0;
+ const flushLatin=()=>{
+  if(!latin)return;
+  const chunk=originalLetterStrokes({...config,name:latin});
+  strokes.push(...chunk.strokes.map(stroke=>shiftStroke(stroke,latinStart)));
+  cursor=latinStart+chunk.guide.bodyEnd;
+  latin='';
+ };
+ characters.forEach((char,index)=>{
+  if(isHanzi(char)){
+   flushLatin();
+   const chinese=chineseCharacterStrokes(char,index,config,cursor);
+   strokes.push(...chinese.strokes);
+   cursor+=chinese.advance;
+  }else if(char==='·'){
+   flushLatin();
+   strokes.push(middleDotStroke(index,config,cursor));
+   cursor+=config.font.size*.30;
+  }else{
+   if(!latin)latinStart=cursor;
+   latin+=char;
+  }
+ });
+ flushLatin();
+ return {strokes,guide:{...guide,bodyStart:0,bodyEnd:cursor,hasDescenders:false}};
+}
+
 /** Prepare timed TYX strokes with deterministic pressure samples. */
 export function buildWebBrush(config:SignatureConfig,_scheme:Scheme,_family:'tyx-brush'|'tyx-soft'='tyx-brush'):PreparedBrush{
  const handwriting={...config,font:{...config.font,initialScale:1+(config.font.initialScale-1)*.45}};
- const original=originalLetterStrokes(handwriting),strokes=original.strokes,size=config.font.size;
+ const original=hanziCharacters(handwriting.name).length?mixedStrokes(handwriting):originalLetterStrokes(handwriting),strokes=original.strokes,size=config.font.size;
  let clock=0;
  const prepared=strokes.map((source,index)=>{
   // Prepare timing objects without mutating the source strokes.

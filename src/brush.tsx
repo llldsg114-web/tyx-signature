@@ -4,7 +4,7 @@ import {pointAt,pathOf,pointBounds,type Curve,type Point,type Box} from './geome
 import {sampleCubic} from './geometry';
 import {writingTiming} from './timeline';
 import type {SignatureConfig} from './config';
-export type BrushStroke={id:string;char:string;index:number;curve:Curve;start:number;duration:number;width:number;position:'initial'|'medial'|'terminal'|'punctuation';dot:boolean};
+export type BrushStroke={id:string;char:string;index:number;curve:Curve;start:number;duration:number;width:number;position:'initial'|'medial'|'terminal'|'punctuation'|'han';dot:boolean};
 export const brushProgress=(u:number)=>{const t=Math.max(0,Math.min(1,u));return t-.065*Math.sin(t*Math.PI*2);};
 export function parseStroke(d:string):Curve{
  const tokens=d.match(/[MLC]|-?\d*\.?\d+/g)??[];let i=0,x=0,y=0,length=0;const points:Curve['points']=[];

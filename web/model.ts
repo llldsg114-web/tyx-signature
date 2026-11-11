@@ -5,6 +5,7 @@ import {STORED_DECORATION_IDS} from './decoration-catalog';
 
 const color = z.string().regex(/^#[\da-f]{6}$/i, '请选择有效的颜色');
 const finite = (min:number,max:number) => z.number().finite().min(min).max(max);
+const webNamePattern=/^[\p{Script=Han}A-Za-z '\-·]+$/u;
 export const fontFamilies = [
   {id:'tyx-brush',name:'TYX Brush · 原作连笔'},
 ] as const;
@@ -32,8 +33,8 @@ export const webSchema = z.object({
 }).strict().superRefine((c,ctx)=>{
   for(let i=0;i<(c.mode==='couple'?2:1);i++){
     const name=c.people[i].name,prefix=c.mode==='couple'?`${i===0?'第一':'第二'}位：`:'';
-    if(!name||!/[a-z]/i.test(name))ctx.addIssue({code:'custom',path:['people',i,'name'],message:`${prefix}至少输入一个英文字母`});
-    else if(!/^[A-Za-z '\-]+$/.test(name))ctx.addIssue({code:'custom',path:['people',i,'name'],message:`${prefix}请使用英文字母、空格、英文撇号或连字符`});
+    if(!name||!/[\p{Script=Han}A-Za-z]/u.test(name))ctx.addIssue({code:'custom',path:['people',i,'name'],message:`${prefix}至少输入一个汉字或英文字母`});
+    else if(!webNamePattern.test(name))ctx.addIssue({code:'custom',path:['people',i,'name'],message:`${prefix}请使用汉字、英文字母、空格、中点、英文撇号或连字符`});
   }
   if(c.timing.duration-c.timing.hold<2)ctx.addIssue({code:'custom',path:['timing','hold'],message:'请为书写和收尾保留至少 2 秒，缩短定格或增加总时长'});
 });
