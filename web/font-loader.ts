@@ -41,5 +41,4 @@ export async function loadConfigFonts(config:WebConfig):Promise<void>{
     }
   }
   await Promise.all(requests);
-  await document.fonts.ready;
 }
