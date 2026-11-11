@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {asBrushConfig,defaultWebConfig} from '../web/model';
+import {asBrushConfig,chineseFontChoices,defaultWebConfig,englishFontChoices} from '../web/model';
 import {layoutFontText} from '../web/text-layout';
 import {prepareScene} from '../web/renderer';
 import {clearHanziData} from '../web/hanzi-data';
@@ -47,4 +47,9 @@ test('stroke styles change actual brush geometry deterministically',()=>{
   for(const result of [original,neat,soft,flowing,brush]){
     assert.ok([result.box.minX,result.box.minY,result.box.maxX,result.box.maxY].every(Number.isFinite));
   }
+});
+
+test('creative Chinese and English fonts are exposed as a distinct group',()=>{
+  assert.ok(chineseFontChoices.filter(item=>item.group==='创意').length>=8);
+  assert.ok(englishFontChoices.filter(item=>item.group==='创意').length>=8);
 });
