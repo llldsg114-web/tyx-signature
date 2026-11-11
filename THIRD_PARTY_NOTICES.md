@@ -11,9 +11,11 @@
 | Fontsource 字体包 | MIT（打包工具）；字体分别采用 SIL OFL 1.1 | [Fontsource](https://github.com/fontsource/fontsource) |
 | LXGW WenKai | SIL OFL 1.1 | [LxgwWenKai](https://github.com/lxgw/LxgwWenKai) |
 | Kose Font SC / Yozai / Huninn / Smiley Sans | SIL OFL 1.1 | [Kose](https://github.com/lxgw/kose-font)、[Yozai](https://github.com/lxgw/yozai-font)、[Huninn](https://github.com/justfont/open-huninn-font)、[Smiley Sans](https://github.com/atelier-anchor/smiley-sans) |
+| Zhuque Fangsong / LXGW Bright / Glow Sans / Fusion Pixel | SIL OFL 1.1 | [Zhuque](https://github.com/TrionesType/zhuque)、[LXGW Bright](https://github.com/lxgw/LxgwBright)、[Glow Sans](https://github.com/welai/glow-sans)、[Fusion Pixel](https://github.com/TakWolf/fusion-pixel-font) |
 | Ma Shan Zheng / Zhi Mang Xing / Long Cang / Liu Jian Mao Cao / ZCOOL XiaoWei / ZCOOL QingKe HuangYou / ZCOOL KuaiLe | SIL OFL 1.1 | [Google Fonts](https://github.com/google/fonts) |
 | Great Vibes / Tangerine / Italianno / Alex Brush / Caveat / Allura / Parisienne / Pinyon Script / Dancing Script / Sacramento / Petit Formal Script / Kalam / Mrs Saint Delafield / Herr Von Muellerhoff / Meie Script / Marck Script / Grand Hotel / Kaushan Script / Berkshire Swash / Norican / Qwigley / Arizonia | SIL OFL 1.1 | [Google Fonts](https://github.com/google/fonts) |
 | Yellowtail / Homemade Apple | Apache-2.0 | [Google Fonts](https://github.com/google/fonts) |
+| Bungee / Bungee Shade / Monoton / Rubik Glitch / Bagel Fat One / Faster One / Silkscreen / Press Start 2P | SIL OFL 1.1 | [Google Fonts](https://github.com/google/fonts) |
 | Geist Sans 可变字体（geist 1.9.2） | SIL OFL 1.1 | [Geist](licenses/Geist-OFL-1.1.txt) |
 | Phosphor Icons 2.1.1，regular | MIT | [Phosphor Icons](licenses/Phosphor-Icons-MIT.txt) |
 
