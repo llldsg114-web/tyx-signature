@@ -60,6 +60,23 @@ test('choosing a different decoration clears the previous ornament placement',()
   assert.equal(person.decoration.offsetX,.12);
   assert.equal(person.decoration.offsetY,-.08);
 });
+test('legacy designs repair ornament placement inherited from the old default decoration',()=>{
+  const c=defaultWebConfig();
+  c.people[0].decoration.id='heart';
+  c.people[1].decoration.id='paw-beans';
+  const repaired=loadConfig({getItem:key=>key===STORAGE_KEY?JSON.stringify(c):null}).config;
+  for(const person of repaired.people){
+    assert.equal(person.decoration.scale,1);
+    assert.equal(person.decoration.offsetX,0);
+    assert.equal(person.decoration.offsetY,0);
+  }
+  const custom=defaultWebConfig();
+  custom.people[1].decoration={...custom.people[1].decoration,id:'paw-beans',scale:.7,offsetX:.03,offsetY:.02};
+  const kept=loadConfig({getItem:key=>key===STORAGE_KEY?JSON.stringify(custom):null}).config;
+  assert.equal(kept.people[1].decoration.scale,.7);
+  assert.equal(kept.people[1].decoration.offsetX,.03);
+  assert.equal(kept.people[1].decoration.offsetY,.02);
+});
 
 test('defaults clone the default design and never share nested state',()=>{
   const first=defaultWebConfig();
@@ -73,7 +90,7 @@ test('defaults clone the default design and never share nested state',()=>{
 
 test('every active decoration survives independent-person file and storage round trips',()=>{
   for(const id of ACTIVE_DECORATION_IDS){
-    const c=defaultWebConfig();c.people[0].decoration.id=id;c.people[1].decoration.id='heart';
+    const c=defaultWebConfig();chooseDecoration(c.people[0],id);chooseDecoration(c.people[1],'heart');
     let text='';saveConfig({setItem:(_key,value)=>{text=value;}},c);
     const restored=loadConfig({getItem:key=>key===STORAGE_KEY?text:null}).config;
     assert.equal(restored.people[0].decoration.id,id);

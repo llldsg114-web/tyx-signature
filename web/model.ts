@@ -78,6 +78,17 @@ function simplifyDesign(config:WebConfig):WebConfig{
   }
   return config;
 }
+function repairStoredDecorationPlacements(config:WebConfig):WebConfig{
+  for(const [index,person] of config.people.entries()){
+    const authored=defaultDesign.people[index].decoration;
+    const inheritedPlacement=person.decoration.id!==authored.id
+      &&Math.abs(person.decoration.scale-authored.scale)<1e-12
+      &&Math.abs(person.decoration.offsetX-authored.offsetX)<1e-12
+      &&Math.abs(person.decoration.offsetY-authored.offsetY)<1e-12;
+    if(inheritedPlacement){person.decoration.scale=1;person.decoration.offsetX=0;person.decoration.offsetY=0;}
+  }
+  return config;
+}
 export function validateConfig(value:unknown):WebConfig{
   const result=webSchema.safeParse(value);
   if(!result.success)throw new Error(result.error.issues.map(i=>i.message).filter((v,i,a)=>a.indexOf(v)===i).join('；'));
@@ -91,7 +102,7 @@ export function parseConfigFile(text:string):WebConfig{
 export function loadConfig(storage:Pick<Storage,'getItem'>):{config:WebConfig;warning?:string}{
   try{
     const raw=storage.getItem(STORAGE_KEY);
-    if(raw)return {config:parseConfigFile(raw)};
+    if(raw)return {config:repairStoredDecorationPlacements(parseConfigFile(raw))};
     const legacy=LEGACY_STORAGE_KEYS.map(key=>storage.getItem(key)).find(Boolean);
     if(!legacy)return {config:defaultWebConfig()};
     // Structural compatibility is shared with file import. A new storage key
