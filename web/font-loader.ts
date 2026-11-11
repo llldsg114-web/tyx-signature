@@ -21,6 +21,9 @@ const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
   'lxgw-bright':()=>import('@daihaus/lxgw-bright/400-normal.css'),
   'glow-sans-sc':async()=>{const {default:url}=await import('@fontpkg/glow-sans-sc/GlowSansSC-Normal-Regular.otf?url');const face=new FontFace('Glow Sans SC',`url("${url}")`);await face.load();document.fonts.add(face);},
   'fusion-pixel-sc':()=>import('@fontsource/fusion-pixel-12px-proportional-sc/index.css'),
+  'lxgw-marker-gothic':()=>import('cn-fontsource-lxgw-marker-gothic-regular/font.css'),
+  '975-maru-sc':()=>import('cn-fontsource-975-maru-sc-regular/font.css'),
+  'xiaolai-sc':()=>import('cn-fontsource-xiaolai-sc-regular/font.css'),
 };
 const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'great-vibes':()=>import('@fontsource/great-vibes/latin-400.css'),
