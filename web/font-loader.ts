@@ -31,12 +31,7 @@ const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
     await face.load();
     document.fonts.add(face);
   },
-  'maoken-glitch-sans':async()=>{
-    const {default:url}=await import('./fonts/maoken-glitch.woff2?url');
-    const face=new FontFace('Maoken Glitch Sans',`url("${url}") format("woff2")`);
-    await face.load();
-    document.fonts.add(face);
-  },
+  'maoken-glitch-sans':()=>import('./fonts/maoken-glitch-slices/font.css'),
   'maoken-feng-ya-song':async()=>{
     const {default:url}=await import('./fonts/maoken-feng-ya-song.woff2?url');
     const face=new FontFace('MaokenFengYaSong',`url("${url}") format("woff2")`);
