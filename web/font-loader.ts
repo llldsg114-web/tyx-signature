@@ -5,10 +5,10 @@ type ChineseFontId=WebConfig['people'][number]['font']['chineseFont'];
 type EnglishFontId=WebConfig['people'][number]['font']['englishFont'];
 
 const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
-  'ma-shan-zheng':()=>import('@fontsource/ma-shan-zheng/chinese-simplified-400.css'),
-  'zhi-mang-xing':()=>import('@fontsource/zhi-mang-xing/chinese-simplified-400.css'),
-  'long-cang':()=>import('@fontsource/long-cang/chinese-simplified-400.css'),
-  'liu-jian-mao-cao':()=>import('@fontsource/liu-jian-mao-cao/chinese-simplified-400.css'),
+  'ma-shan-zheng':()=>import('@fontsource/ma-shan-zheng/index.css'),
+  'zhi-mang-xing':()=>import('@fontsource/zhi-mang-xing/index.css'),
+  'long-cang':()=>import('@fontsource/long-cang/index.css'),
+  'liu-jian-mao-cao':()=>import('@fontsource/liu-jian-mao-cao/index.css'),
 };
 const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'great-vibes':()=>import('@fontsource/great-vibes/latin-400.css'),
