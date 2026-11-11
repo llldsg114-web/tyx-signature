@@ -34,6 +34,9 @@ Pinyon Script, Dancing Script, Sacramento, Petit Formal Script, Kalam,
 Mrs Saint Delafield, Herr Von Muellerhoff, Yellowtail, Homemade Apple,
 Meie Script, Marck Script, Grand Hotel, Kaushan Script, Berkshire Swash,
 Norican, Qwigley, Arizonia
+Zhuque Fangsong, LXGW Bright, Glow Sans, Fusion Pixel,
+Bungee, Bungee Shade, Monoton, Rubik Glitch, Bagel Fat One, Faster One,
+Silkscreen, Press Start 2P
 Source: https://github.com/fontsource/fontsource and https://github.com/google/fonts
 
 Geist Sans variable font, geist 1.9.2 — SIL Open Font License 1.1

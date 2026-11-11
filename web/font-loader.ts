@@ -17,6 +17,10 @@ const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
   'yozai':()=>import('cn-fontsource-yozai/font.css'),
   'huninn':()=>import('@fontsource/huninn/index.css'),
   'smiley-sans':async()=>{const {default:url}=await import('@fontpkg/smiley-sans/SmileySans-Oblique.ttf.woff2?url');const face=new FontFace('Smiley Sans',`url("${url}")`);await face.load();document.fonts.add(face);},
+  'zhuque-fangsong':()=>import('@free-fonts/zhuque-fangsong/zhuque-fangsong.css'),
+  'lxgw-bright':()=>import('@daihaus/lxgw-bright/400-normal.css'),
+  'glow-sans-sc':async()=>{const {default:url}=await import('@fontpkg/glow-sans-sc/GlowSansSC-Normal-Regular.otf?url');const face=new FontFace('Glow Sans SC',`url("${url}")`);await face.load();document.fonts.add(face);},
+  'fusion-pixel-sc':()=>import('@fontsource/fusion-pixel-12px-proportional-sc/index.css'),
 };
 const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'great-vibes':()=>import('@fontsource/great-vibes/latin-400.css'),
@@ -43,6 +47,14 @@ const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'norican':()=>import('@fontsource/norican/latin-400.css'),
   'qwigley':()=>import('@fontsource/qwigley/latin-400.css'),
   'arizonia':()=>import('@fontsource/arizonia/latin-400.css'),
+  'bungee':()=>import('@fontsource/bungee/latin-400.css'),
+  'bungee-shade':()=>import('@fontsource/bungee-shade/latin-400.css'),
+  'monoton':()=>import('@fontsource/monoton/latin-400.css'),
+  'rubik-glitch':()=>import('@fontsource/rubik-glitch/latin-400.css'),
+  'bagel-fat-one':()=>import('@fontsource/bagel-fat-one/latin-400.css'),
+  'faster-one':()=>import('@fontsource/faster-one/latin-400.css'),
+  'silkscreen':()=>import('@fontsource/silkscreen/latin-400.css'),
+  'press-start-2p':()=>import('@fontsource/press-start-2p/latin-400.css'),
 };
 const loaded=new Set<string>();
 

@@ -22,6 +22,10 @@ export const chineseFontChoices=[
   {id:'yozai',label:'悠哉字体',family:'Yozai'},
   {id:'huninn',label:'粉圆体',family:'Huninn'},
   {id:'smiley-sans',label:'得意黑',family:'Smiley Sans'},
+  {id:'zhuque-fangsong',label:'朱雀仿宋',family:'Zhuque Fangsong'},
+  {id:'lxgw-bright',label:'霞鹜亮字',family:'LXGW Bright'},
+  {id:'glow-sans-sc',label:'未来荧黑',family:'Glow Sans SC'},
+  {id:'fusion-pixel-sc',label:'Fusion 像素体',family:'Fusion Pixel 12px Proportional SC'},
 ] as const;
 export const englishFontChoices=[
   {id:'great-vibes',label:'Great Vibes',family:'Great Vibes'},
@@ -48,6 +52,14 @@ export const englishFontChoices=[
   {id:'norican',label:'Norican',family:'Norican'},
   {id:'qwigley',label:'Qwigley',family:'Qwigley'},
   {id:'arizonia',label:'Arizonia',family:'Arizonia'},
+  {id:'bungee',label:'Bungee',family:'Bungee'},
+  {id:'bungee-shade',label:'Bungee Shade',family:'Bungee Shade'},
+  {id:'monoton',label:'Monoton',family:'Monoton'},
+  {id:'rubik-glitch',label:'Rubik Glitch',family:'Rubik Glitch'},
+  {id:'bagel-fat-one',label:'Bagel Fat One',family:'Bagel Fat One'},
+  {id:'faster-one',label:'Faster One',family:'Faster One'},
+  {id:'silkscreen',label:'Silkscreen',family:'Silkscreen'},
+  {id:'press-start-2p',label:'Press Start 2P',family:'Press Start 2P'},
 ] as const;
 export const strokeStyleChoices=[
   {id:'original',label:'原版连笔'},
