@@ -5,10 +5,14 @@ type ChineseFontId=WebConfig['people'][number]['font']['chineseFont'];
 type EnglishFontId=WebConfig['people'][number]['font']['englishFont'];
 
 const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
+  'lxgw-wenkai':()=>import('lxgw-wenkai-webfont/lxgwwenkai-regular.css'),
   'ma-shan-zheng':()=>import('@fontsource/ma-shan-zheng/index.css'),
   'zhi-mang-xing':()=>import('@fontsource/zhi-mang-xing/index.css'),
   'long-cang':()=>import('@fontsource/long-cang/index.css'),
   'liu-jian-mao-cao':()=>import('@fontsource/liu-jian-mao-cao/index.css'),
+  'zcool-xiaowei':()=>import('@fontsource/zcool-xiaowei/index.css'),
+  'zcool-qingke-huangyou':()=>import('@fontsource/zcool-qingke-huangyou/index.css'),
+  'zcool-kuaile':()=>import('@fontsource/zcool-kuaile/index.css'),
 };
 const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'great-vibes':()=>import('@fontsource/great-vibes/latin-400.css'),
@@ -16,6 +20,15 @@ const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'italianno':()=>import('@fontsource/italianno/latin-400.css'),
   'alex-brush':()=>import('@fontsource/alex-brush/latin-400.css'),
   'caveat':()=>import('@fontsource/caveat/latin-400.css'),
+  'allura':()=>import('@fontsource/allura/latin-400.css'),
+  'parisienne':()=>import('@fontsource/parisienne/latin-400.css'),
+  'pinyon-script':()=>import('@fontsource/pinyon-script/latin-400.css'),
+  'dancing-script':()=>import('@fontsource/dancing-script/latin-400.css'),
+  'sacramento':()=>import('@fontsource/sacramento/latin-400.css'),
+  'petit-formal-script':()=>import('@fontsource/petit-formal-script/latin-400.css'),
+  'kalam':()=>import('@fontsource/kalam/latin-400.css'),
+  'mrs-saint-delafield':()=>import('@fontsource/mrs-saint-delafield/latin-400.css'),
+  'herr-von-muellerhoff':()=>import('@fontsource/herr-von-muellerhoff/latin-400.css'),
 };
 const loaded=new Set<string>();
 

@@ -10,10 +10,14 @@ export const fontFamilies = [
   {id:'tyx-brush',name:'TYX Brush · 原作连笔'},
 ] as const;
 export const chineseFontChoices=[
+  {id:'lxgw-wenkai',label:'霞鹜文楷',family:'LXGW WenKai'},
   {id:'ma-shan-zheng',label:'马善政楷书',family:'Ma Shan Zheng'},
   {id:'zhi-mang-xing',label:'志莽行书',family:'Zhi Mang Xing'},
   {id:'long-cang',label:'龙藏体',family:'Long Cang'},
   {id:'liu-jian-mao-cao',label:'柳建毛草',family:'Liu Jian Mao Cao'},
+  {id:'zcool-xiaowei',label:'站酷小薇',family:'ZCOOL XiaoWei'},
+  {id:'zcool-qingke-huangyou',label:'站酷庆科黄油',family:'ZCOOL QingKe HuangYou'},
+  {id:'zcool-kuaile',label:'站酷快乐体',family:'ZCOOL KuaiLe'},
 ] as const;
 export const englishFontChoices=[
   {id:'great-vibes',label:'Great Vibes',family:'Great Vibes'},
@@ -21,6 +25,15 @@ export const englishFontChoices=[
   {id:'italianno',label:'Italianno',family:'Italianno'},
   {id:'alex-brush',label:'Alex Brush',family:'Alex Brush'},
   {id:'caveat',label:'Caveat',family:'Caveat'},
+  {id:'allura',label:'Allura',family:'Allura'},
+  {id:'parisienne',label:'Parisienne',family:'Parisienne'},
+  {id:'pinyon-script',label:'Pinyon Script',family:'Pinyon Script'},
+  {id:'dancing-script',label:'Dancing Script',family:'Dancing Script'},
+  {id:'sacramento',label:'Sacramento',family:'Sacramento'},
+  {id:'petit-formal-script',label:'Petit Formal Script',family:'Petit Formal Script'},
+  {id:'kalam',label:'Kalam',family:'Kalam'},
+  {id:'mrs-saint-delafield',label:'Mrs Saint Delafield',family:'Mrs Saint Delafield'},
+  {id:'herr-von-muellerhoff',label:'Herr Von Muellerhoff',family:'Herr Von Muellerhoff'},
 ] as const;
 export const strokeStyleChoices=[
   {id:'original',label:'原版连笔'},
