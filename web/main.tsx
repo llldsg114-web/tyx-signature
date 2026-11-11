@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {canvasSize,chooseDecoration,clamp,defaultWebConfig,loadConfig,parseConfigFile,saveConfig,validateConfig,type PersonConfig,type WebConfig} from './model';
+import {canvasSize,chooseDecoration,chineseFontChoices,clamp,defaultWebConfig,englishFontChoices,loadConfig,parseConfigFile,saveConfig,strokeStyleChoices,validateConfig,type PersonConfig,type WebConfig} from './model';
 import {prepareScene,type PreparedScene} from './renderer';
 import {Preview} from './Preview';
 import {ColorField,Details,Icon,Range,Section,Toggle,UtilityMenu} from './ui';
@@ -8,6 +8,7 @@ import {MorphNav} from './MorphNav';
 import {DecorationThumbnail} from './DecorationThumbnail';
 import {categoryForDecoration,decorationCatalog,decorationCategories,type DecorationCategory} from './decoration-catalog';
 import {loadHanziData,missingHanziCharacters} from './hanzi-data';
+import {loadConfigFonts} from './font-loader';
 import './style.css';
 
 type Tab='signature'|'decoration'|'export';
@@ -27,12 +28,16 @@ function App(){
   const [undo,setUndo]=useState<{config:WebConfig;audio:File|null}|null>(null);
   const [hanziStatus,setHanziStatus]=useState<{status:'idle'|'loading'|'ready'|'error';error?:string}>({status:'idle'});
   const [hanziRevision,setHanziRevision]=useState(0);
-  const activeNamesKey=useMemo(()=>config.people.slice(0,config.mode==='couple'?2:1).map(person=>person.name).join('\n'),[config.mode,config.people[0].name,config.people[1].name]);
+  const [fontStatus,setFontStatus]=useState<{status:'idle'|'loading'|'ready'|'error';error?:string}>({status:'idle'});
+  const [fontRevision,setFontRevision]=useState(0);
+  const activePeople=useMemo(()=>config.people.slice(0,config.mode==='couple'?2:1),[config.mode,config.people]);
+  const hanziNamesKey=useMemo(()=>activePeople.filter(person=>person.font.mode==='stroke').map(person=>person.name).join('\n'),[activePeople]);
+  const fontLoadKey=useMemo(()=>activePeople.filter(person=>person.font.mode==='font').map(person=>`${person.name}|${person.font.chineseFont}|${person.font.englishFont}`).join('\n'),[activePeople]);
   useEffect(()=>{
     let active=true;
-    if(!missingHanziCharacters(activeNamesKey).length){setHanziStatus({status:'ready'});return ()=>{active=false;};}
+    if(!missingHanziCharacters(hanziNamesKey).length){setHanziStatus({status:'ready'});return ()=>{active=false;};}
     setHanziStatus({status:'loading'});
-    void loadHanziData(activeNamesKey).then(()=>{
+    void loadHanziData(hanziNamesKey).then(()=>{
       if(!active)return;
       setHanziStatus({status:'ready'});setHanziRevision(value=>value+1);
     }).catch(error=>{
@@ -40,17 +45,34 @@ function App(){
       setHanziStatus({status:'error',error:error instanceof Error?error.message:'中文笔顺加载失败。'});
     });
     return ()=>{active=false;};
-  },[activeNamesKey]);
+  },[hanziNamesKey]);
+  useEffect(()=>{
+    let active=true;
+    if(!fontLoadKey){setFontStatus({status:'ready'});return ()=>{active=false;};}
+    setFontStatus({status:'loading'});
+    void loadConfigFonts(config).then(()=>{
+      if(!active)return;
+      setFontStatus({status:'ready'});setFontRevision(value=>value+1);
+    }).catch(error=>{
+      if(!active)return;
+      setFontStatus({status:'error',error:error instanceof Error?error.message:'所选字体加载失败。'});
+    });
+    return ()=>{active=false;};
+  },[fontLoadKey]);
   const prepared=useMemo(()=>{
     try{
-      const c=validateConfig(config),missing=missingHanziCharacters(activeNamesKey);
+      const c=validateConfig(config),missing=missingHanziCharacters(hanziNamesKey);
       if(missing.length){
         if(hanziStatus.status==='error')return {scene:null,error:hanziStatus.error??'中文笔顺加载失败。',loading:''};
         return {scene:null,error:'',loading:`正在加载“${missing.join('”')}”的汉字笔顺…`};
       }
+      if(fontLoadKey&&fontStatus.status!=='ready'){
+        if(fontStatus.status==='error')return {scene:null,error:fontStatus.error??'所选字体加载失败。',loading:''};
+        return {scene:null,error:'',loading:'正在加载所选字体…'};
+      }
       const scene=prepareScene(c);return {scene,error:'',loading:''};
     }catch(error){return {scene:null,error:error instanceof Error?error.message:'暂时无法绘制，请检查参数',loading:''};}
-  },[config,activeNamesKey,hanziStatus,hanziRevision]);
+  },[config,hanziNamesKey,fontLoadKey,hanziStatus,fontStatus,hanziRevision,fontRevision]);
   if(prepared.scene)lastGood.current=prepared.scene;
   const scene=prepared.scene??lastGood.current;
   const person=config.people[selected],busy=job.status==='checking'||job.status==='working';
@@ -97,6 +119,14 @@ function App(){
           <label className="field"><span className="field-label">中文、英文名字或拼音</span><input className="name-input" aria-label="签名姓名" aria-invalid={invalidName} aria-describedby={invalidName?'signature-name-error':undefined} value={person.name} maxLength={40} placeholder="例如 张伟、Alex、Li Xin" spellCheck={false} autoComplete="off" onChange={event=>changePerson(next=>{next.name=event.target.value;})}/></label>
           {invalidName&&<p className="field-error caption-4" id="signature-name-error">请输入汉字或英文字母，可保留空格、中点、撇号和连字符。</p>}
         </Section></div>
+        <div className="setting-card"><Toggle title="使用真实字体" checked={person.font.mode==='font'} onChange={value=>changePerson(next=>{next.font.mode=value?'font':'stroke';})}/></div>
+        {person.font.mode==='font'?<div className="setting-card"><Section title="字体选择" icon="pen">
+          <label className="field"><span className="field-label">中文字体</span><select value={person.font.chineseFont} onChange={event=>changePerson(next=>{next.font.chineseFont=event.target.value as PersonConfig['font']['chineseFont'];})}>{chineseFontChoices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label className="field"><span className="field-label">英文字体</span><select value={person.font.englishFont} onChange={event=>changePerson(next=>{next.font.englishFont=event.target.value as PersonConfig['font']['englishFont'];})}>{englishFontChoices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <p className="caption-5">字体模式会逐字显现；需要真实汉字笔顺时请关闭“使用真实字体”。</p>
+        </Section></div>:<div className="setting-card"><Section title="笔迹风格" icon="pen">
+          <label className="field"><span className="field-label">逐笔风格</span><select value={person.font.style} onChange={event=>changePerson(next=>{next.font.style=event.target.value as PersonConfig['font']['style'];})}>{strokeStyleChoices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        </Section></div>}
         <div className="setting-card"><ColorField key={`signature-color-${selected}`} title="签名颜色" value={person.ink.color} editable onChange={value=>changePerson(next=>{next.ink.color=value;next.glow.color=value;})}/></div>
         <div className="setting-card"><Range title="大小" value={person.position.scale} min={.45} max={1.5} step={.05} suffix="×" onChange={value=>changePerson(next=>{next.position.scale=value;})}/></div>
         <div className="setting-card"><Range title="笔迹粗细" value={person.font.penWidth} min={.5} max={2} step={.05} suffix="×" onChange={value=>changePerson(next=>{next.font.penWidth=value;})}/></div>

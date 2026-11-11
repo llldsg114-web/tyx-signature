@@ -9,12 +9,42 @@ const webNamePattern=/^[\p{Script=Han}A-Za-z '\-·]+$/u;
 export const fontFamilies = [
   {id:'tyx-brush',name:'TYX Brush · 原作连笔'},
 ] as const;
+export const chineseFontChoices=[
+  {id:'ma-shan-zheng',label:'马善政楷书',family:'Ma Shan Zheng'},
+  {id:'zhi-mang-xing',label:'志莽行书',family:'Zhi Mang Xing'},
+  {id:'long-cang',label:'龙藏体',family:'Long Cang'},
+  {id:'liu-jian-mao-cao',label:'柳建毛草',family:'Liu Jian Mao Cao'},
+] as const;
+export const englishFontChoices=[
+  {id:'great-vibes',label:'Great Vibes',family:'Great Vibes'},
+  {id:'tangerine',label:'Tangerine',family:'Tangerine'},
+  {id:'italianno',label:'Italianno',family:'Italianno'},
+  {id:'alex-brush',label:'Alex Brush',family:'Alex Brush'},
+  {id:'caveat',label:'Caveat',family:'Caveat'},
+] as const;
+export const strokeStyleChoices=[
+  {id:'original',label:'原版连笔'},
+  {id:'neat',label:'清秀硬笔'},
+  {id:'soft',label:'圆润软笔'},
+  {id:'flowing',label:'潇洒行书'},
+  {id:'brush',label:'毛笔浓墨'},
+] as const;
+const chineseFontIds=chineseFontChoices.map(item=>item.id) as [typeof chineseFontChoices[number]['id'],...typeof chineseFontChoices[number]['id'][]];
+const englishFontIds=englishFontChoices.map(item=>item.id) as [typeof englishFontChoices[number]['id'],...typeof englishFontChoices[number]['id'][]];
+const strokeStyleIds=strokeStyleChoices.map(item=>item.id) as [typeof strokeStyleChoices[number]['id'],...typeof strokeStyleChoices[number]['id'][]];
 export const personSchema = z.object({
   name:z.string().max(40,'最多输入 40 个字符'),
   // Retain old values when reading saved designs; the website uses the authored glyphs directly.
   scheme:z.enum(['classic','loop','sweep']).default('classic'),
   position:z.object({x:finite(-.45,.45),y:finite(-.45,.45),scale:finite(.45,1.5),rotation:finite(-20,20)}),
-  font:z.object({family:z.enum(['tyx-brush','tyx-soft']).default('tyx-brush'),size:finite(48,320),penWidth:finite(.5,2),pressure:finite(0,1),initialScale:finite(1,1.6),initialOffsetX:finite(-120,120),initialOffsetY:finite(-120,120),terminalLength:finite(.5,1.8)}),
+  font:z.object({
+    family:z.enum(['tyx-brush','tyx-soft']).default('tyx-brush'),
+    mode:z.enum(['stroke','font']).default('stroke'),
+    style:z.enum(strokeStyleIds).default('original'),
+    chineseFont:z.enum(chineseFontIds).default('ma-shan-zheng'),
+    englishFont:z.enum(englishFontIds).default('great-vibes'),
+    size:finite(48,320),penWidth:finite(.5,2),pressure:finite(0,1),initialScale:finite(1,1.6),initialOffsetX:finite(-120,120),initialOffsetY:finite(-120,120),terminalLength:finite(.5,1.8),
+  }),
   ink:z.object({color}),
   glow:z.object({enabled:z.boolean(),color,strength:finite(0,1),radius:finite(0,48)}),
   decoration:z.object({id:z.enum(STORED_DECORATION_IDS),scale:finite(.5,1.5),offsetX:finite(-.45,.45),offsetY:finite(-.45,.45),action:z.enum(['wink','none']),earFold:z.boolean(),playful:z.boolean().default(true)}),

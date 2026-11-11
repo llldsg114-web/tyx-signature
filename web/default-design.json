@@ -13,6 +13,10 @@
       },
       "font": {
         "family": "tyx-brush",
+        "mode": "stroke",
+        "style": "original",
+        "chineseFont": "ma-shan-zheng",
+        "englishFont": "great-vibes",
         "size": 240,
         "penWidth": 1.45,
         "pressure": 0.85,
@@ -60,6 +64,10 @@
       },
       "font": {
         "family": "tyx-brush",
+        "mode": "stroke",
+        "style": "original",
+        "chineseFont": "ma-shan-zheng",
+        "englishFont": "great-vibes",
         "size": 240,
         "penWidth": 0.95,
         "pressure": 0.85,

@@ -7,6 +7,7 @@ import {cuteDecorationPaths,catEarAnchors} from './cute-elements';
 import {continuousMotionTiming,prepareContinuousMotion,drawContinuousInk,drawContinuousParticles,type ContinuousMotion,type ContinuousGroup} from './continuous-motion';
 import {isDecorationId} from './decoration-catalog';
 import {referenceDecorationPaths} from './reference-decorations';
+import {layoutFontText,type FontTextLayout} from './text-layout';
 
 type Phase={start:number;end:number};
 type Plan={lead:Phase;writing:Phase;returning:Phase;underline:Phase;leaving:Phase;decoration:Phase;reaction:Phase;wink:Phase;outro:Phase;activeEnd:number;introOutroEnabled:boolean};
@@ -14,7 +15,7 @@ export type Hit={index:0|1;target:'signature'|'decoration'};
 export type HitArea=Hit&{bounds:Box};
 type DecoStroke={id:string;curve?:Curve;eye?:Point;width:number;profile?:string;color?:string;filled?:boolean};
 type PreparedDecoration={center:Point;radius:number;strokes:DecoStroke[];bounds:Box;earRoots?:{left:Point;right:Point}};
-type PersonScene={index:0|1;config:PersonConfig;brush:PreparedBrush;plan:Plan;baseScale:number;scale:number;angle:number;tx:number;ty:number;center:Point;anchor:Point;decoration:PreparedDecoration;bounds:Box;signatureBounds:Box};
+type PersonScene={index:0|1;config:PersonConfig;brush:PreparedBrush;text?:FontTextLayout;plan:Plan;baseScale:number;scale:number;angle:number;tx:number;ty:number;center:Point;anchor:Point;decoration:PreparedDecoration;bounds:Box;signatureBounds:Box};
 export type PreparedScene={width:number;height:number;duration:number;editingTime:number;hitAreas:HitArea[];warnings:string[];people:PersonScene[];continuous:ContinuousMotion|null;config:WebConfig};
 const TAU=Math.PI*2;
 const smooth=(n:number)=>{const u=clamp(n,0,1);return u*u*(3-2*u);};
@@ -28,7 +29,7 @@ const shiftBox=(b:Box,x:number,y:number):Box=>({minX:b.minX+x,minY:b.minY+y,maxX
 function effectivePerson(source:PersonConfig,enabled:boolean):PersonConfig{
  const person=structuredClone(source);
  // Geometry presets are fixed; only the visible size and position compose the scene.
- person.font={...person.font,family:'tyx-brush',size:240,penWidth:source.font.penWidth,pressure:.85,initialScale:1.15,initialOffsetX:0,initialOffsetY:0,terminalLength:1};
+ person.font={...person.font,family:'tyx-brush',mode:source.font.mode,style:source.font.style,chineseFont:source.font.chineseFont,englishFont:source.font.englishFont,size:240,penWidth:source.font.penWidth,pressure:.85,initialScale:1.15,initialOffsetX:0,initialOffsetY:0,terminalLength:1};
  if(!isDecorationId(person.decoration.id))person.decoration.id='none';
  person.decoration={...person.decoration,action:'wink',earFold:true,playful:true};
  person.underline={enabled:false,lift:false};
@@ -74,8 +75,8 @@ function strokeBounds(strokes:readonly DecoStroke[]):Box{
  const points=strokes.flatMap(s=>(s.curve?.points??(s.eye?[s.eye]:[])).flatMap(p=>[{x:p.x-s.width,y:p.y-s.width},{x:p.x+s.width,y:p.y+s.width}]));
  return points.length?pointBounds(points):{minX:0,minY:0,maxX:0,maxY:0};
 }
-function prepareDecoration(person:PersonConfig,brush:PreparedBrush):PreparedDecoration{
- const b=brush.box,w=b.maxX-b.minX,size=240,radius=clamp(w*.10,size*.17,size*.33)*person.decoration.scale;
+function prepareDecoration(person:PersonConfig,brush:PreparedBrush,box=brush.box):PreparedDecoration{
+ const b=box,w=b.maxX-b.minX,size=240,radius=clamp(w*.10,size*.17,size*.33)*person.decoration.scale;
  const source=ornamentStrokes(person.decoration.id),bounds=strokeBounds(source),unit=radius/50;
  let center={x:(b.minX+b.maxX)/2,y:b.minY-(bounds.maxY+8)*unit-size*.09},strokes=source,earRoots:PreparedDecoration['earRoots'];
  if(person.decoration.id==='cat-ears'){
@@ -95,11 +96,19 @@ function prepareBrush(person:PersonConfig,config:WebConfig):PreparedBrush{
  const referencePerson={...person,font:{...person.font,penWidth:1}};
  const brush=buildWebBrush(asBrushConfig(referencePerson,config),'classic','tyx-brush');brushCache.set(key,brush);if(brushCache.size>12)brushCache.delete(brushCache.keys().next().value!);return brush;
 }
+function fontProxyBrush(text:FontTextLayout):PreparedBrush{
+  const curve:Curve={points:[{x:0,y:0,length:0},{x:text.width,y:0,length:text.width}],length:text.width};
+  return {strokes:[{id:'font-proxy',char:'',index:0,curve,start:0,duration:1,width:1,position:'punctuation',dot:false,samples:[{x:0,y:0,u:0,radius:.5},{x:text.width,y:0,u:1,radius:.5}]}],duration:1,box:{minX:0,minY:text.top,maxX:text.width,maxY:text.bottom},guide:{baseline:0,xHeight:text.fontSize*.55,hasDescenders:false,bodyStart:0,bodyEnd:text.width}};
+}
 
 export function prepareScene(input:WebConfig):PreparedScene{
  const config=structuredClone(input),{width,height}=canvasSize(config.canvas.aspect),count=config.mode==='couple'?2:1,warnings:string[]=[],hitAreas:HitArea[]=[];
  const people:PersonScene[]=config.people.slice(0,count).map((source,index)=>{
-  const person=effectivePerson(source,config.animation.introOutroEnabled),brush=prepareBrush(person,config),b=brush.box,size=240,w=b.maxX-b.minX,h=b.maxY-b.minY,plan=makePlan(config,person),decoration=prepareDecoration(person,brush);
+  const person=effectivePerson(source,config.animation.introOutroEnabled);
+  const text=person.font.mode==='font'?layoutFontText(person.name,person.font):undefined;
+  const brush=text?fontProxyBrush(text):prepareBrush(person,config);
+  const b=text?{minX:0,minY:text.top,maxX:text.width,maxY:text.bottom}:brush.box;
+  const size=240,w=b.maxX-b.minX,h=b.maxY-b.minY,plan=makePlan(config,person),decoration=prepareDecoration(person,brush,b);
   const anchor={x:(b.minX+b.maxX)/2,y:(b.minY+b.maxY)/2},angle=-6*Math.PI/180;
   // This reference is only a function of fixed glyph geometry and the artboard.
   // A size change scales around the ink center; ornaments/toggles never recenter it.
@@ -108,7 +117,7 @@ export function prepareScene(input:WebConfig):PreparedScene{
   const baseScale=Math.min(slotWidth/(rotated.maxX-rotated.minX),slotHeight/(rotated.maxY-rotated.minY),bodyHeight/Math.max(1,h));
   const scale=baseScale*person.position.scale,center={x:width*(count===2?(index===0?.255:.745):.5)+person.position.x*width,y:height*.53+person.position.y*height},turn=rotate(anchor,angle),tx=center.x-turn.x*scale,ty=center.y-turn.y*scale;
   const signatureBounds=b;
-  const group:PersonScene={index:index as 0|1,config:person,brush,plan,baseScale,scale,angle,tx,ty,center,anchor,decoration,bounds:b,signatureBounds};
+  const group:PersonScene={index:index as 0|1,config:person,brush,text,plan,baseScale,scale,angle,tx,ty,center,anchor,decoration,bounds:b,signatureBounds};
   const inkPad=person.glow.enabled?person.glow.radius*2.2:0;
   const widthPad=Math.max(0,person.font.penWidth-1)*Math.max(...brush.strokes.flatMap(stroke=>stroke.samples.map(sample=>sample.radius)));
   const boxes=[expand(worldBox(signatureBounds,group),(inkPad+widthPad)*scale)];
@@ -122,7 +131,7 @@ export function prepareScene(input:WebConfig):PreparedScene{
   return group;
  });
  const editingTime=config.animation.introOutroEnabled?Math.max(0,config.timing.duration-continuousMotionTiming.outro):config.timing.duration;
- const continuous=config.animation.introOutroEnabled?prepareContinuousMotion(people.flatMap(group=>{const ornament=continuousDecoration(group,width,height);return ornament?[group,ornament]:[group];}),width,height):null;
+  const continuous=config.animation.introOutroEnabled&&people.every(group=>group.config.font.mode==='stroke')?prepareContinuousMotion(people.flatMap(group=>{const ornament=continuousDecoration(group,width,height);return ornament?[group,ornament]:[group];}),width,height):null;
  return {width,height,duration:config.timing.duration,editingTime,hitAreas,warnings,people,continuous,config};
 }
 export function hitTest(scene:PreparedScene,x:number,y:number):Hit|null{
@@ -150,6 +159,28 @@ function drawBrush(context:CanvasRenderingContext2D,group:PersonScene,time:numbe
  let prefix=widths.get(penWidth);if(!prefix||prefix.count>count)prefix={count:0,path:new Path2D()};for(let i=prefix.count;i<count;i++)prefix.path.addPath(finishedPath(brush.strokes[i],config.font.pressure,penWidth));prefix.count=count;widths.set(penWidth,prefix);if(widths.size>3)widths.delete(widths.keys().next().value!);
  let path=prefix.path;const active=brush.strokes[count];if(active){const p=brushProgress((natural-active.start)/active.duration);if(p>0){path=new Path2D(prefix.path);appendStroke(path,active,p,config.font.pressure,penWidth);}}
  fillInk(context,config,group.scale,path,time);
+}
+function drawFontText(context:CanvasRenderingContext2D,group:PersonScene,time:number):void{
+ const layout=group.text;if(!layout)return;
+ const phase=group.plan.writing;
+ if(time<phase.start)return;
+ const progress=phase.end<=phase.start?(time>=phase.end?1:0):clamp((time-phase.start)/(phase.end-phase.start),0,1);
+ const reveal=progress*layout.width;
+ for(const glyph of layout.glyphs){
+  if(glyph.kind==='space')continue;
+   const glyphProgress=clamp((reveal-glyph.x)/Math.max(.01,glyph.width),0,1);
+  if(glyphProgress<=0)continue;
+  context.save();
+  context.font=`400 ${layout.fontSize}px "${glyph.family}"`;
+  context.textAlign='left';context.textBaseline='alphabetic';
+  context.beginPath();context.rect(glyph.x,layout.top,glyph.width*glyphProgress,layout.bottom-layout.top);context.clip();
+  if(group.config.glow.enabled&&group.config.glow.strength>0){
+   context.fillStyle=group.config.glow.color;context.shadowColor=group.config.glow.color;context.shadowBlur=group.config.glow.radius*group.scale;context.globalAlpha=group.config.glow.strength*.46;context.fillText(glyph.char,glyph.x,0);
+   context.shadowBlur=group.config.glow.radius*group.scale*.28;context.globalAlpha=group.config.glow.strength*.22;context.fillText(glyph.char,glyph.x,0);
+  }
+  context.shadowBlur=0;context.globalAlpha=1;context.fillStyle=group.config.ink.color;context.fillText(glyph.char,glyph.x,0);
+  context.restore();
+ }
 }
 function curveInk(curve:Curve,p:number,width:number,profile='brush',offset:Point={x:0,y:0}):InkSample[]{
  if(p<=0)return [];const count=Math.max(1,Math.ceil(curve.length*p/2));return Array.from({length:count+1},(_,i)=>{const u=p*i/count,a=pointAt(curve,u),w=profile==='round'?1:profile==='line'?Math.max(.025,Math.sin(Math.PI*Math.pow(u,.82)))*(.75+.25*u):profile==='taper'?Math.max(.025,(1-u)**.7):.28+.72*Math.sin(Math.PI*u)**.7;return {x:a.x+offset.x*smooth(u),y:a.y+offset.y*smooth(u),u,radius:Math.max(.02,width*.5*w)};});
@@ -244,7 +275,9 @@ export function renderDecorationThumbnail(canvas:HTMLCanvasElement,id:string,sou
  context.setTransform(1,0,0,1,0,0);context.globalAlpha=1;context.globalCompositeOperation='source-over';context.shadowBlur=0;context.fillStyle=background;context.fillRect(0,0,width,height);
  if(!isDecorationId(id)||id==='none'||width<=0||height<=0)return;
  const config=defaultWebConfig();config.animation.introOutroEnabled=false;
- const person=effectivePerson(source,false);person.decoration={...person.decoration,id,offsetX:0,offsetY:0};
+ const person=effectivePerson(source,false);
+ if(person.font.mode==='font'){person.font.mode='stroke';person.name='A';}
+ person.decoration={...person.decoration,id,offsetX:0,offsetY:0};
  const brush=prepareBrush(person,config),decoration=prepareDecoration(person,brush);if(!decoration.strokes.length)return;
  const bounds=strokeBounds(decoration.strokes),padding=Math.max(10,Math.min(width,height)*.12),fit=Math.min((width-padding*2)/Math.max(1,bounds.maxX-bounds.minX),(height-padding*2)/Math.max(1,bounds.maxY-bounds.minY)),unit=decoration.radius/50,scale=fit/Math.max(.001,unit),center={x:width/2,y:height/2};
  const group:PersonScene={index:0,config:person,brush,plan:makePlan(config,person),baseScale:scale,scale,angle:0,tx:center.x-decoration.center.x*scale-(bounds.minX+bounds.maxX)*fit/2,ty:center.y-decoration.center.y*scale-(bounds.minY+bounds.maxY)*fit/2,center,anchor:{x:0,y:0},decoration,bounds,signatureBounds:brush.box};
@@ -263,6 +296,7 @@ function continuousDecoration(group:PersonScene,width:number,height:number):Cont
 }
 
 function localPen(group:PersonScene,time:number):Point|null{
+ if(group.config.font.mode==='font')return null;
  const {plan,brush}=group;if(time<plan.writing.start||time>=plan.writing.end)return null;
  if(time<plan.writing.end){const natural=handwritingTime(group,time),active=strokeAt(brush,natural),next=brush.strokes[brush.strokes.indexOf(active.stroke)+1];if(next&&natural>active.stroke.start+active.stroke.duration+.012&&natural<next.start)return null;return active.point;}
  return null;
@@ -270,12 +304,12 @@ function localPen(group:PersonScene,time:number):Point|null{
 export function penPosition(scene:PreparedScene,index:0|1,time:number):Point|null{const group=scene.people.find(g=>g.index===index);if(!group)return null;const p=localPen(group,time);return p?world(p,group):null;}
 function drawEffects(context:CanvasRenderingContext2D,scene:PreparedScene,time:number):void{
  const effects=scene.config.effects;if(!scene.config.animation.introOutroEnabled||!effects.sparkles||effects.intensity<=0)return;
- for(const group of scene.people){const amount=smooth((time-group.plan.writing.end)/.6)*effects.intensity;if(amount<=0)continue;const b=group.brush.box,w=b.maxX-b.minX,h=b.maxY-b.minY,points=[{x:b.minX-w*.08,y:b.minY-h*.22},{x:b.maxX+w*.11,y:b.minY-h*.35},{x:b.minX+w*.47,y:b.minY-h*.55}];context.save();context.translate(group.tx,group.ty);context.rotate(group.angle);context.scale(group.scale,group.scale);for(let i=0;i<points.length;i++){const p=points[i],pulse=((Math.sin(time*(1.3+i*.17)+i*2.1+group.index*.7)+1)/2)**2,r=240*(.008+.005*pulse);context.globalAlpha=amount*(.13+.37*pulse);context.fillStyle=['#ffd1e3','#fff9ff','#c8d8ff'][i];context.shadowColor=context.fillStyle;context.shadowBlur=240*.025*group.scale;context.beginPath();context.moveTo(p.x-r,p.y);context.quadraticCurveTo(p.x,p.y,p.x,p.y-r*1.5);context.quadraticCurveTo(p.x,p.y,p.x+r,p.y);context.quadraticCurveTo(p.x,p.y,p.x,p.y+r*1.5);context.quadraticCurveTo(p.x,p.y,p.x-r,p.y);context.fill();}context.restore();}
+ for(const group of scene.people){const amount=smooth((time-group.plan.writing.end)/.6)*effects.intensity;if(amount<=0)continue;const b=group.signatureBounds,w=b.maxX-b.minX,h=b.maxY-b.minY,points=[{x:b.minX-w*.08,y:b.minY-h*.22},{x:b.maxX+w*.11,y:b.minY-h*.35},{x:b.minX+w*.47,y:b.minY-h*.55}];context.save();context.translate(group.tx,group.ty);context.rotate(group.angle);context.scale(group.scale,group.scale);for(let i=0;i<points.length;i++){const p=points[i],pulse=((Math.sin(time*(1.3+i*.17)+i*2.1+group.index*.7)+1)/2)**2,r=240*(.008+.005*pulse);context.globalAlpha=amount*(.13+.37*pulse);context.fillStyle=['#ffd1e3','#fff9ff','#c8d8ff'][i];context.shadowColor=context.fillStyle;context.shadowBlur=240*.025*group.scale;context.beginPath();context.moveTo(p.x-r,p.y);context.quadraticCurveTo(p.x,p.y,p.x,p.y-r*1.5);context.quadraticCurveTo(p.x,p.y,p.x+r,p.y);context.quadraticCurveTo(p.x,p.y,p.x,p.y+r*1.5);context.quadraticCurveTo(p.x,p.y,p.x-r,p.y);context.fill();}context.restore();}
 }
 export function renderScene(canvas:HTMLCanvasElement,scene:PreparedScene,time:number,complete=false):void{
  if(canvas.width!==scene.width)canvas.width=scene.width;if(canvas.height!==scene.height)canvas.height=scene.height;const context=canvas.getContext('2d',{alpha:false});if(!context)throw new Error('当前浏览器无法创建签名画布，请换用系统浏览器。');const t=complete?scene.editingTime:clamp(Number.isFinite(time)?time:0,0,scene.duration);
  const enabled=scene.config.animation.introOutroEnabled;
  context.setTransform(1,0,0,1,0,0);context.globalAlpha=1;context.globalCompositeOperation='source-over';context.shadowBlur=0;context.fillStyle=scene.config.canvas.background;context.fillRect(0,0,scene.width,scene.height);
  if(enabled&&scene.continuous){drawContinuousInk(context,scene.continuous,t,scene.duration);if(!complete)drawContinuousParticles(context,scene.continuous,t,scene.duration);return;}
- for(const group of scene.people){context.save();context.translate(group.tx,group.ty);context.rotate(group.angle);context.scale(group.scale,group.scale);drawBrush(context,group,t);context.restore();drawDecoration(context,scene,group,t);}
+ for(const group of scene.people){context.save();context.translate(group.tx,group.ty);context.rotate(group.angle);context.scale(group.scale,group.scale);if(group.config.font.mode==='font')drawFontText(context,group,t);else drawBrush(context,group,t);context.restore();drawDecoration(context,scene,group,t);}
 }

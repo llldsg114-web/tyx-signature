@@ -24,6 +24,11 @@ hanzi-writer-data 2.0.1 / Make Me a Hanzi — Arphic Public License
 License: hanzi-data/ARPHICPL.TXT
 Source: https://github.com/chanind/hanzi-writer-data
 
+Fontsource font packages — MIT package tooling; font files use SIL OFL 1.1
+Fonts: Ma Shan Zheng, Zhi Mang Xing, Long Cang, Liu Jian Mao Cao,
+Great Vibes, Tangerine, Italianno, Alex Brush, Caveat
+Source: https://github.com/fontsource/fontsource and https://github.com/google/fonts
+
 Geist Sans variable font, geist 1.9.2 — SIL Open Font License 1.1
 Copyright (c) 2023 Vercel, in collaboration with basement.studio
 License: licenses/Geist-OFL-1.1.txt
