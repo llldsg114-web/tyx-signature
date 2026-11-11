@@ -29,6 +29,12 @@ export const chineseFontChoices=[
   {id:'lxgw-marker-gothic',label:'霞鹜漫黑',family:'LXGW Marker Gothic',group:'创意'},
   {id:'975-maru-sc',label:'975 圆体',family:'975Maru SC',group:'创意'},
   {id:'xiaolai-sc',label:'小赖字体',family:'Xiaolai SC',group:'手写'},
+  {id:'long-zhu-ti',label:'标小智龙珠体',family:'LongZhuTi',group:'创意'},
+  {id:'maoken-assorted-sans',label:'猫啃什锦黑',family:'MaokenAssortedSans-Lite',group:'创意'},
+  {id:'maoken-glitch-sans',label:'猫啃故障黑',family:'Maoken Glitch Sans',group:'创意'},
+  {id:'maoken-feng-ya-song',label:'猫啃风雅宋',family:'MaokenFengYaSong',group:'创意'},
+  {id:'alimama-dong-fang-da-kai',label:'阿里妈妈东方大楷',family:'Alimama DongFangDaKai',group:'创意'},
+  {id:'slideqiuhong',label:'演示秋鸿楷',family:'Slideqiuhong',group:'手写'},
 ] as const;
 export const englishFontChoices=[
   {id:'great-vibes',label:'Great Vibes',family:'Great Vibes',group:'花体'},

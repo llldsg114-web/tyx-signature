@@ -1,0 +1,10 @@
+Slideqiuhong (演示秋鸿楷)
+
+The upstream font release describes this font as free for commercial use.
+This project does not relicense the font.
+
+Source and usage information:
+https://www.fonts.net.cn/font-38836352052.html
+
+Packaged for the web by:
+https://github.com/wc-ex/cn-fontsource

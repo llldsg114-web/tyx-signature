@@ -36,6 +36,8 @@ Meie Script, Marck Script, Grand Hotel, Kaushan Script, Berkshire Swash,
 Norican, Qwigley, Arizonia
 Zhuque Fangsong, LXGW Bright, Glow Sans, Fusion Pixel,
 LXGW Marker Gothic, 975 Maru, Xiaolai,
+LongZhuTi, Maoken Assorted Sans Lite, Maoken Glitch Sans,
+Maoken FengYaSong, Alimama DongFangDaKai, Slideqiuhong,
 Bungee, Bungee Shade, Monoton, Rubik Glitch, Bagel Fat One, Faster One,
 Silkscreen, Press Start 2P
 Source: https://github.com/fontsource/fontsource and https://github.com/google/fonts

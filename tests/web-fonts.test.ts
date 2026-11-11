@@ -50,6 +50,12 @@ test('stroke styles change actual brush geometry deterministically',()=>{
 });
 
 test('creative Chinese and English fonts are exposed as a distinct group',()=>{
-  assert.ok(chineseFontChoices.filter(item=>item.group==='创意').length>=8);
+  const creativeChinese=chineseFontChoices.filter(item=>item.group==='创意');
+  assert.ok(creativeChinese.length>=15);
+  assert.deepEqual(
+    ['long-zhu-ti','maoken-assorted-sans','maoken-glitch-sans','maoken-feng-ya-song','alimama-dong-fang-da-kai']
+      .filter(id=>!creativeChinese.some(item=>item.id===id)),
+    [],
+  );
   assert.ok(englishFontChoices.filter(item=>item.group==='创意').length>=8);
 });

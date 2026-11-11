@@ -13,6 +13,8 @@
 | Kose Font SC / Yozai / Huninn / Smiley Sans | SIL OFL 1.1 | [Kose](https://github.com/lxgw/kose-font)、[Yozai](https://github.com/lxgw/yozai-font)、[Huninn](https://github.com/justfont/open-huninn-font)、[Smiley Sans](https://github.com/atelier-anchor/smiley-sans) |
 | Zhuque Fangsong / LXGW Bright / Glow Sans / Fusion Pixel | SIL OFL 1.1 | [Zhuque](https://github.com/TrionesType/zhuque)、[LXGW Bright](https://github.com/lxgw/LxgwBright)、[Glow Sans](https://github.com/welai/glow-sans)、[Fusion Pixel](https://github.com/TakWolf/fusion-pixel-font) |
 | LXGW Marker Gothic / 975 Maru / Xiaolai | SIL OFL 1.1 | [wc-ex/cn-fontsource](https://github.com/wc-ex/cn-fontsource) |
+| 标小智龙珠体 / 猫啃什锦黑 / 猫啃故障黑 / 猫啃风雅宋 | SIL OFL 1.1 | [龙珠体许可](public/licenses/LongZhuTi-OFL-1.1.txt)、[什锦黑许可](public/licenses/Maoken-Assorted-Sans-OFL-1.1.txt)、[故障黑许可](public/licenses/Maoken-Glitch-Sans-OFL-1.1.txt)、[风雅宋许可](public/licenses/Maoken-Feng-Ya-Song-OFL-1.1.txt) |
+| 阿里妈妈东方大楷 / 演示秋鸿楷 | 免费商用，具体授权以上游发布页为准 | [东方大楷说明](public/licenses/Alimama-DongFangDaKai-license.txt)、[演示秋鸿楷说明](public/licenses/Slideqiuhong-license.txt) |
 | Ma Shan Zheng / Zhi Mang Xing / Long Cang / Liu Jian Mao Cao / ZCOOL XiaoWei / ZCOOL QingKe HuangYou / ZCOOL KuaiLe | SIL OFL 1.1 | [Google Fonts](https://github.com/google/fonts) |
 | Great Vibes / Tangerine / Italianno / Alex Brush / Caveat / Allura / Parisienne / Pinyon Script / Dancing Script / Sacramento / Petit Formal Script / Kalam / Mrs Saint Delafield / Herr Von Muellerhoff / Meie Script / Marck Script / Grand Hotel / Kaushan Script / Berkshire Swash / Norican / Qwigley / Arizonia | SIL OFL 1.1 | [Google Fonts](https://github.com/google/fonts) |
 | Yellowtail / Homemade Apple | Apache-2.0 | [Google Fonts](https://github.com/google/fonts) |

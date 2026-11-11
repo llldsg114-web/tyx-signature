@@ -1,0 +1,10 @@
+Alimama DongFangDaKai (阿里妈妈东方大楷)
+
+The upstream font release describes this font as free for commercial use.
+This project does not relicense the font.
+
+Source and usage information:
+https://www.maoken.com/freefonts/17643.html
+
+Packaged for the web by:
+https://github.com/wc-ex/cn-fontsource

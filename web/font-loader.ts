@@ -24,6 +24,27 @@ const chineseLoaders:Record<ChineseFontId,()=>Promise<unknown>>={
   'lxgw-marker-gothic':()=>import('cn-fontsource-lxgw-marker-gothic-regular/font.css'),
   '975-maru-sc':()=>import('cn-fontsource-975-maru-sc-regular/font.css'),
   'xiaolai-sc':()=>import('cn-fontsource-xiaolai-sc-regular/font.css'),
+  'long-zhu-ti':()=>import('cn-fontsource-long-zhu-ti-regular/font.css'),
+  'maoken-assorted-sans':async()=>{
+    const {default:url}=await import('./fonts/maoken-assorted-sans.woff2?url');
+    const face=new FontFace('MaokenAssortedSans-Lite',`url("${url}") format("woff2")`);
+    await face.load();
+    document.fonts.add(face);
+  },
+  'maoken-glitch-sans':async()=>{
+    const {default:url}=await import('./fonts/maoken-glitch.woff2?url');
+    const face=new FontFace('Maoken Glitch Sans',`url("${url}") format("woff2")`);
+    await face.load();
+    document.fonts.add(face);
+  },
+  'maoken-feng-ya-song':async()=>{
+    const {default:url}=await import('./fonts/maoken-feng-ya-song.woff2?url');
+    const face=new FontFace('MaokenFengYaSong',`url("${url}") format("woff2")`);
+    await face.load();
+    document.fonts.add(face);
+  },
+  'alimama-dong-fang-da-kai':()=>import('cn-fontsource-alimama-dong-fang-da-kai-regular/font.css'),
+  'slideqiuhong':()=>import('cn-fontsource-slideqiuhong-regular/font.css'),
 };
 const englishLoaders:Record<EnglishFontId,()=>Promise<unknown>>={
   'great-vibes':()=>import('@fontsource/great-vibes/latin-400.css'),
