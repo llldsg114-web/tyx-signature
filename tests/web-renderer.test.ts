@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {asBrushConfig,defaultWebConfig,type WebConfig} from '../web/model';
 import {prepareScene,hitTest,penPosition,decorationPoint,renderScene,renderDecorationThumbnail} from '../web/renderer';
 import {buildWebBrush,brushProgress,strokeAt,visibleSamples} from '../web/brush-engine';
+import {clearHanziData,primeHanziData} from '../web/hanzi-data';
 import {naturalInkTime,referenceFrameAt} from '../web/continuous-motion';
 import {ACTIVE_DECORATION_IDS} from '../web/decoration-catalog';
 import {referenceDecorationPaths} from '../web/reference-decorations';
@@ -33,13 +34,13 @@ type Matrix=[number,number,number,number,number,number];
 type Paint={color:string;alpha:number;shadow:number;matrix:Matrix;commands:Command[]};
 class CanvasRecorder{
  fillStyle='#000000';strokeStyle='#000000';shadowColor='#000000';shadowBlur=0;globalAlpha=1;globalCompositeOperation='source-over';lineWidth=1;lineCap='butt';lineJoin='miter';font='10px sans-serif';textAlign='start';textBaseline='alphabetic';
- matrix:Matrix=[1,0,0,1,0,0];path=new RecordedPath();fills:Paint[]=[];strokes:Paint[]=[];backgrounds:{color:string;args:number[]}[]=[];stack:Record<string,unknown>[]=[];
+ matrix:Matrix=[1,0,0,1,0,0];path=new RecordedPath();clipPath:Command[]|null=null;fills:Paint[]=[];strokes:Paint[]=[];backgrounds:{color:string;args:number[]}[]=[];stack:Record<string,unknown>[]=[];
  setTransform(a:number,b:number,c:number,d:number,e:number,f:number){this.matrix=[a,b,c,d,e,f];}
  transform(a:number,b:number,c:number,d:number,e:number,f:number){const [x,y,z,w,u,v]=this.matrix;this.matrix=[x*a+z*b,y*a+w*b,x*c+z*d,y*c+w*d,x*e+z*f+u,y*e+w*f+v];}
  translate(x:number,y:number){this.transform(1,0,0,1,x,y);}
  rotate(angle:number){this.transform(Math.cos(angle),Math.sin(angle),-Math.sin(angle),Math.cos(angle),0,0);}
  scale(x:number,y:number){this.transform(x,0,0,y,0,0);}
- save(){this.stack.push({matrix:[...this.matrix],fillStyle:this.fillStyle,strokeStyle:this.strokeStyle,shadowColor:this.shadowColor,shadowBlur:this.shadowBlur,globalAlpha:this.globalAlpha,globalCompositeOperation:this.globalCompositeOperation,lineWidth:this.lineWidth,lineCap:this.lineCap,lineJoin:this.lineJoin,font:this.font,textAlign:this.textAlign,textBaseline:this.textBaseline});}
+ save(){this.stack.push({matrix:[...this.matrix],clipPath:this.clipPath?[...this.clipPath]:null,fillStyle:this.fillStyle,strokeStyle:this.strokeStyle,shadowColor:this.shadowColor,shadowBlur:this.shadowBlur,globalAlpha:this.globalAlpha,globalCompositeOperation:this.globalCompositeOperation,lineWidth:this.lineWidth,lineCap:this.lineCap,lineJoin:this.lineJoin,font:this.font,textAlign:this.textAlign,textBaseline:this.textBaseline});}
  restore(){const state=this.stack.pop();assert.ok(state,'balanced Canvas state');Object.assign(this,state);}
  beginPath(){this.path=new RecordedPath();}
  moveTo(...args:number[]){this.path.moveTo(...args);}
@@ -48,11 +49,11 @@ class CanvasRecorder{
  quadraticCurveTo(...args:number[]){this.path.quadraticCurveTo(...args);}
  closePath(){this.path.closePath();}
  rect(...args:number[]){this.path.commands.push(['rect',...args]);}
- clip(){this.path.commands.push(['clip']);}
+ clip(path?:RecordedPath){this.clipPath=((path??this.path).commands).map(command=>[...command]);}
  paint(path:RecordedPath,color:string):Paint{return {color,alpha:this.globalAlpha,shadow:this.shadowBlur,matrix:[...this.matrix],commands:path.commands.map(command=>[...command])};}
  fill(path=this.path){this.fills.push(this.paint(path,this.fillStyle));}
  stroke(){this.strokes.push(this.paint(this.path,this.strokeStyle));}
- fillText(text:string,x:number,y:number){const path=new RecordedPath();path.commands.push(['fillText',text,x,y]);this.fills.push(this.paint(path,this.fillStyle));}
+ fillText(text:string,x:number,y:number){const path=new RecordedPath();if(this.clipPath)path.commands.push(...this.clipPath);path.commands.push(['fillText',text,x,y]);this.fills.push(this.paint(path,this.fillStyle));}
  fillRect(...args:number[]){this.backgrounds.push({color:this.fillStyle,args});}
 }
 const originalPath=Object.getOwnPropertyDescriptor(globalThis,'Path2D');
@@ -84,6 +85,21 @@ test('actual font mode paints Chinese and English with their selected font famil
  const glyphs=r.context.fills.flatMap(fill=>fill.commands).filter(command=>command[0]==='fillText');
  assert.deepEqual(glyphs.map(command=>command[1]),['A','l','e','x','王']);
  assert.ok(r.context.fills.some(fill=>fill.commands.some(command=>command[0]==='fillText')));
+});
+
+test('actual font mode reveals Chinese glyphs through ordered brush-stroke masks',()=>{
+ clearHanziData();
+ primeHanziData({'王':{strokes:[],medians:[[[130,230],[890,230]],[[180,480],[840,480]],[[130,760],[890,760]]]}});
+ const c=fixture();c.animation.introOutroEnabled=false;c.people[0].name='王';
+ c.people[0].font={...c.people[0].font,mode:'font',chineseFont:'zhi-mang-xing'};
+ const scene=prepareScene(c),phase=scene.people[0].plan.writing,time=phase.start+(phase.end-phase.start)*.55;
+ const r=recording();renderScene(r.canvas,scene,time);
+ const fill=r.context.fills.find(item=>item.commands.some(command=>command[0]==='fillText'&&command[1]==='王'));
+ assert.ok(fill,'王 should be painted with the selected font');
+ assert.ok(fill.commands.some(command=>command[0]==='arc'),'the Chinese glyph should be clipped by brush capsules in stroke order');
+ assert.ok(fill.commands.some(command=>command[0]==='moveTo'),'the mask should use stroke centerlines');
+ assert.ok(fill.commands.some(command=>command[0]==='arc'&&Number(command[2])<0),'the mask must align above the font baseline');
+ assert.ok(!fill.commands.some(command=>command[0]==='rect'),'the glyph should no longer use one horizontal reveal rectangle');
 });
 
 test('the pen samples actual nonlinear writing and supports reverse seeking',()=>{

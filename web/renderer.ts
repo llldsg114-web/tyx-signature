@@ -3,6 +3,7 @@ import {blink} from '../src/motion';
 import {decorationPaths} from '../src/decorations';
 import {asBrushConfig,canvasSize,clamp,defaultWebConfig,type PersonConfig,type WebConfig} from './model';
 import {appendCapsules,brushProgress,buildWebBrush,joinCurves,strokeAt,visibleSamples,type InkSample,type PreparedBrush,type PreparedStroke} from './brush-engine';
+import {getHanziData} from './hanzi-data';
 import {cuteDecorationPaths,catEarAnchors} from './cute-elements';
 import {continuousMotionTiming,prepareContinuousMotion,drawContinuousInk,drawContinuousParticles,type ContinuousMotion,type ContinuousGroup} from './continuous-motion';
 import {isDecorationId} from './decoration-catalog';
@@ -165,15 +166,47 @@ function drawFontText(context:CanvasRenderingContext2D,group:PersonScene,time:nu
  const phase=group.plan.writing;
  if(time<phase.start)return;
  const progress=phase.end<=phase.start?(time>=phase.end?1:0):clamp((time-phase.start)/(phase.end-phase.start),0,1);
- const reveal=progress*layout.width;
- for(const glyph of layout.glyphs){
-  if(glyph.kind==='space')continue;
-   const glyphProgress=clamp((reveal-glyph.x)/Math.max(.01,glyph.width),0,1);
+ const drawable=layout.glyphs.filter(glyph=>glyph.kind!=='space');
+ const weights=drawable.map(glyph=>glyph.kind==='han'?Math.max(1,getHanziData(glyph.char)?.medians.length??1):1);
+ const totalWeight=Math.max(.01,weights.reduce((sum,weight)=>sum+weight,0));
+ let elapsedWeight=0;
+ for(const [glyphIndex,glyph] of drawable.entries()){
+  const glyphWeight=weights[glyphIndex],glyphStart=elapsedWeight/totalWeight,glyphDuration=glyphWeight/totalWeight;
+  elapsedWeight+=glyphWeight;
+  const glyphProgress=clamp((progress-glyphStart)/Math.max(.00001,glyphDuration),0,1);
   if(glyphProgress<=0)continue;
   context.save();
   context.font=`400 ${layout.fontSize}px "${glyph.family}"`;
   context.textAlign='left';context.textBaseline='alphabetic';
-  context.beginPath();context.rect(glyph.x,layout.top,glyph.width*glyphProgress,layout.bottom-layout.top);context.clip();
+  const hanzi=glyph.kind==='han'?getHanziData(glyph.char):undefined;
+  if(hanzi?.medians.length){
+   const unit=layout.fontSize/1024,radius=Math.max(3,Math.min(glyph.width,layout.fontSize)*.105);
+   context.beginPath();
+   hanzi.medians.forEach((median,strokeIndex)=>{
+    const start=strokeIndex/hanzi.medians.length,end=(strokeIndex+1)/hanzi.medians.length;
+    const strokeProgress=clamp((glyphProgress-start)/Math.max(.00001,end-start),0,1);
+    if(strokeProgress<=0)return;
+    const points=median.map(([x,y])=>({x:glyph.x+x*unit,y:(y-900)*unit,radius,u:0}));
+    const lengths=[0];
+    for(let i=1;i<points.length;i++)lengths.push(lengths[i-1]+Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y));
+    const total=lengths.at(-1)??0,target=total*strokeProgress,samples:InkSample[]=[];
+    for(let i=0;i<points.length;i++){
+     if(lengths[i]>=target&&i>0){
+      const previous=points[i-1],current=points[i],span=lengths[i]-lengths[i-1];
+      const f=span<=0?0:(target-lengths[i-1])/span;
+      samples.push({...previous,x:previous.x+(current.x-previous.x)*f,y:previous.y+(current.y-previous.y)*f,u:strokeProgress});
+      break;
+     }
+     samples.push({...points[i],u:total<=0?strokeProgress:lengths[i]/total});
+    }
+    if(!samples.length)samples.push({...points[0],u:strokeProgress});
+    const last=samples.at(-1)!;last.u=strokeProgress;
+    appendCapsules(context,samples);
+   });
+   context.clip();
+  }else{
+   context.beginPath();context.rect(glyph.x,layout.top,glyph.width*glyphProgress,layout.bottom-layout.top);context.clip();
+  }
   if(group.config.glow.enabled&&group.config.glow.strength>0){
    context.fillStyle=group.config.glow.color;context.shadowColor=group.config.glow.color;context.shadowBlur=group.config.glow.radius*group.scale;context.globalAlpha=group.config.glow.strength*.46;context.fillText(glyph.char,glyph.x,0);
    context.shadowBlur=group.config.glow.radius*group.scale*.28;context.globalAlpha=group.config.glow.strength*.22;context.fillText(glyph.char,glyph.x,0);

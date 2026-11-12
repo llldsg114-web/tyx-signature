@@ -36,7 +36,7 @@ function App(){
   const [fontStatus,setFontStatus]=useState<{status:'idle'|'loading'|'ready'|'error';error?:string}>({status:'idle'});
   const [fontRevision,setFontRevision]=useState(0);
   const activePeople=useMemo(()=>config.people.slice(0,config.mode==='couple'?2:1),[config.mode,config.people]);
-  const hanziNamesKey=useMemo(()=>activePeople.filter(person=>person.font.mode==='stroke').map(person=>person.name).join('\n'),[activePeople]);
+  const hanziNamesKey=useMemo(()=>activePeople.map(person=>person.name).join('\n'),[activePeople]);
   const fontLoadKey=useMemo(()=>activePeople.filter(person=>person.font.mode==='font').map(person=>`${person.name}|${person.font.chineseFont}|${person.font.englishFont}`).join('\n'),[activePeople]);
   useEffect(()=>{
     let active=true;
@@ -128,7 +128,7 @@ function App(){
         {person.font.mode==='font'?<div className="setting-card"><Section title="字体选择" icon="pen">
           <label className="field"><span className="field-label">中文字体</span><select value={person.font.chineseFont} onChange={event=>changePerson(next=>{next.font.chineseFont=event.target.value as PersonConfig['font']['chineseFont'];})}><FontChoiceOptions choices={chineseFontChoices}/></select></label>
           <label className="field"><span className="field-label">英文字体</span><select value={person.font.englishFont} onChange={event=>changePerson(next=>{next.font.englishFont=event.target.value as PersonConfig['font']['englishFont'];})}><FontChoiceOptions choices={englishFontChoices}/></select></label>
-          <p className="caption-5">字体模式会逐字显现；需要真实汉字笔顺时请关闭“使用真实字体”。</p>
+          <p className="caption-5">真实中文字体会按标准笔顺显现，英文字体逐字显现。</p>
         </Section></div>:<div className="setting-card"><Section title="笔迹风格" icon="pen">
           <label className="field"><span className="field-label">逐笔风格</span><select value={person.font.style} onChange={event=>changePerson(next=>{next.font.style=event.target.value as PersonConfig['font']['style'];})}>{strokeStyleChoices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         </Section></div>}
